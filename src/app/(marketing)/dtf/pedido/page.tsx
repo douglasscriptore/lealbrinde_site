@@ -92,33 +92,33 @@ export default async function DtfOrderPage({ searchParams }: PageProps) {
       : 100;
 
   return (
-    <main id="conteudo" className="page-shell py-10 sm:py-16">
+    <main id="conteudo" className="mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
       <div className="mb-9 max-w-3xl">
-        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+        <p className="text-sm font-bold uppercase tracking-[0.14em] text-accent">
           Pedido DTF por metro
         </p>
-        <h1 className="mt-3 text-balance text-4xl font-black tracking-[-0.045em] text-[var(--foreground)] sm:text-6xl">
+        <h1 className="mt-3 text-balance text-4xl font-black tracking-[-0.045em] text-foreground sm:text-6xl">
           Arquivo, dados e valor em uma única etapa
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+        <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
           O preço é recalculado no servidor. O Pix só aparece depois da validação mínima do arquivo e da verificação do seu e-mail.
         </p>
       </div>
 
       {!policyConfirmed || product.status !== "PUBLISHED" ? (
         <section className="mb-7 rounded-2xl border border-[color-mix(in_srgb,var(--warning)_38%,var(--border))] bg-[color-mix(in_srgb,var(--warning)_9%,var(--surface))] p-5">
-          <p className="font-bold text-[var(--foreground)]">Jornada em homologação</p>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+          <p className="font-bold text-foreground">Jornada em homologação</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
             Para testar o fluxo, aceitamos provisoriamente PNG, PDF e TIFF de até 10 MB. A largura útil, os formatos finais, o antimalware e as alegações técnicas ainda precisam ser confirmados antes da publicação.
           </p>
         </section>
       ) : null}
 
-      <section className="mb-7 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-sm leading-relaxed text-[var(--muted)]">
-        Nesta versão, pedidos podem ser concluídos por <strong className="text-[var(--foreground)]">retirada no local</strong>. A entrega será habilitada quando o cálculo final de frete estiver integrado. Consulte também o{" "}
+      <section className="mb-7 rounded-2xl border border-border bg-surface p-5 text-sm leading-relaxed text-muted">
+        Nesta versão, pedidos podem ser concluídos por <strong className="text-foreground">retirada no local</strong>. A entrega será habilitada quando o cálculo final de frete estiver integrado. Consulte também o{" "}
         <Link
           href="/dtf/guia-do-arquivo"
-          className="font-bold text-[var(--foreground)] underline decoration-[var(--accent)] underline-offset-4"
+          className="font-bold text-foreground underline decoration-[var(--accent)] underline-offset-4"
         >
           guia provisório do arquivo
         </Link>

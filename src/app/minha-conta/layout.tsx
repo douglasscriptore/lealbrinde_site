@@ -16,13 +16,13 @@ export default async function CustomerAccountLayout({
   const session = await requireSession();
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="page-shell flex items-center justify-between gap-5 py-4">
+    <div className="min-h-[100dvh] bg-[radial-gradient(circle_at_85%_0%,color-mix(in_srgb,var(--accent)_7%,transparent),transparent_28%),var(--background)] text-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-white/90 shadow-[0_10px_32px_rgb(28_78_96/0.06)] backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-shell items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-5">
             <Link
               aria-label="Leal Brinde, página inicial"
-              className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF]"
+              className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               href="/"
             >
               <Image
@@ -34,16 +34,16 @@ export default async function CustomerAccountLayout({
                 width={116}
               />
             </Link>
-            <div className="hidden min-w-0 border-l border-slate-200 pl-5 dark:border-slate-700 sm:block">
+            <div className="hidden min-w-0 border-l border-border pl-5 sm:block">
               <p className="text-sm font-black">Meus pedidos</p>
-              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+              <p className="truncate text-xs text-muted">
                 {session.user.email}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-[#006E91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:text-[#72D9F7]"
+              className="inline-flex min-h-11 items-center rounded-control px-3 text-sm font-bold text-accent-strong transition-colors hover:bg-accent-soft/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               href="/minha-conta/pedidos"
             >
               Pedidos
@@ -52,7 +52,7 @@ export default async function CustomerAccountLayout({
           </div>
         </div>
       </header>
-      <main className="page-shell py-8 sm:py-12" id="conteudo">
+      <main className="mx-auto w-full max-w-shell px-4 py-8 sm:px-6 sm:py-12 lg:px-8" id="conteudo">
         {children}
       </main>
     </div>

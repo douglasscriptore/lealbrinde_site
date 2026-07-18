@@ -48,7 +48,7 @@ export function CustomerLoginForm() {
             autoComplete="email"
             required
             placeholder="voce@empresa.com.br"
-            className="min-h-12 w-full rounded-[10px] border bg-background py-3 pl-12 pr-4 text-foreground placeholder:text-muted focus:border-accent"
+            className="min-h-12 w-full rounded-control border bg-background py-3 pl-12 pr-4 text-foreground placeholder:text-muted focus:border-accent"
           />
         </div>
         <p className="text-sm text-muted">Sem senha. O link expira em 10 minutos.</p>

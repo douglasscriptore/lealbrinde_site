@@ -16,15 +16,16 @@ export function ClosingCta({
   secondaryAction,
 }: ClosingCtaProps) {
   return (
-    <section className="bg-[var(--background)] px-4 pb-20 pt-8 sm:px-6 sm:pb-28 lg:px-8">
-      <Reveal className="mx-auto max-w-[1400px] overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--accent)_35%,var(--border))] bg-[color-mix(in_srgb,var(--accent)_9%,var(--surface))] px-6 py-14 sm:px-10 sm:py-20 lg:px-16">
-        <h2 className="max-w-5xl text-balance text-4xl font-black tracking-[-0.05em] text-[var(--foreground)] sm:text-6xl lg:text-7xl">
+    <section className="bg-background px-4 pb-20 pt-8 sm:px-6 sm:pb-28 lg:px-8">
+      <Reveal className="relative mx-auto max-w-shell overflow-hidden rounded-card border border-accent/25 bg-[radial-gradient(circle_at_84%_10%,var(--accent-soft),transparent_34%),linear-gradient(145deg,var(--surface),var(--surface-strong))] px-6 py-14 shadow-premium sm:px-10 sm:py-20 lg:px-16">
+        <span aria-hidden="true" className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
+        <h2 className="max-w-5xl text-balance text-4xl font-black tracking-[-0.05em] text-foreground sm:text-6xl lg:text-7xl">
           {title}
         </h2>
-        <p className="mt-6 max-w-[58ch] text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+        <p className="mt-6 max-w-[58ch] text-base leading-relaxed text-muted sm:text-lg">
           {description}
         </p>
-        <div className="mt-9 flex flex-col items-start gap-3 sm:flex-row">
+        <div className="relative mt-9 flex flex-col items-start gap-3 sm:flex-row">
           <MarketingLink {...primaryAction} />
           {secondaryAction ? <MarketingLink {...secondaryAction} variant="secondary" /> : null}
         </div>

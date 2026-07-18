@@ -16,6 +16,7 @@ export type MarketingAction = {
 export type NavigationItem = {
   label: string;
   href: string;
+  external?: boolean;
 };
 
 export type Sector = {

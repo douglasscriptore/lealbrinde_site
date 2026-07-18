@@ -7,6 +7,7 @@ import {
   UploadSimple,
   Warning,
 } from "@phosphor-icons/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
@@ -41,6 +42,7 @@ export function ArtworkUpload({
   uploadEndpoint = "/api/uploads",
   onAssetChange,
 }: ArtworkUploadProps) {
+  const shouldReduceMotion = useReducedMotion();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [state, setState] = useState<
     | { status: "idle" }
@@ -103,13 +105,13 @@ export function ArtworkUpload({
     <div>
       <label
         htmlFor="artwork"
-        className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[var(--background)] px-5 py-8 text-center transition-colors hover:border-[var(--accent)] focus-within:border-[var(--accent)] focus-within:ring-4 focus-within:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]"
+        className="group flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed border-border bg-[linear-gradient(145deg,var(--background),var(--surface-strong))] px-5 py-8 text-center shadow-[inset_0_1px_0_rgb(255_255_255/0.9)] transition-[transform,border-color,box-shadow] hover:-translate-y-0.5 hover:border-accent hover:shadow-premium focus-within:border-accent focus-within:ring-4 focus-within:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]"
       >
-        <UploadSimple aria-hidden="true" size={32} weight="duotone" className="text-[var(--accent)]" />
-        <span className="mt-4 font-bold text-[var(--foreground)]">
+        <UploadSimple aria-hidden="true" size={32} weight="duotone" className="text-accent transition-transform group-hover:-translate-y-1" />
+        <span className="mt-4 font-bold text-foreground">
           Selecione o arquivo pronto para impressão
         </span>
-        <span className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
+        <span className="mt-2 text-xs leading-relaxed text-muted">
           {acceptedExtensions.join(", ")}
           {maximumFileSizeMb !== null ? `, até ${maximumFileSizeMb} MB` : ""}
         </span>
@@ -124,54 +126,86 @@ export function ArtworkUpload({
       </label>
 
       <div aria-live="polite" className="mt-4">
+        <AnimatePresence initial={false} mode="wait">
         {state.status === "uploading" ? (
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-strong)] p-4 text-sm font-semibold text-[var(--foreground)]">
-            <span className="size-5 animate-pulse rounded-full bg-[var(--accent)] motion-reduce:animate-none" />
-            Enviando e validando o arquivo
-          </div>
+          <motion.div
+            key="uploading"
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-3 rounded-card bg-surface-strong p-4 text-sm font-semibold text-foreground"
+          >
+            <span className="grid size-9 place-items-center rounded-control bg-white text-accent shadow-sm">
+              <UploadSimple aria-hidden="true" size={20} weight="bold" />
+            </span>
+            <span className="min-w-0 flex-1">
+              Enviando e validando o arquivo
+              <span className="mt-2 block h-1.5 w-full animate-skeleton rounded-full bg-accent/25 motion-reduce:animate-none" />
+            </span>
+          </motion.div>
         ) : null}
 
         {state.status === "success" ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--success)_38%,var(--border))] bg-[color-mix(in_srgb,var(--success)_9%,var(--surface))] p-4">
-            <CheckCircle aria-hidden="true" size={23} weight="fill" className="shrink-0 text-[var(--success)]" />
+          <motion.div
+            key="success"
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.985 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex items-start gap-3 rounded-card border border-[color-mix(in_srgb,var(--success)_38%,var(--border))] bg-[color-mix(in_srgb,var(--success)_9%,var(--surface))] p-4"
+          >
+            <CheckCircle aria-hidden="true" size={23} weight="fill" className="shrink-0 text-success" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-[var(--foreground)]">
+              <p className="truncate text-sm font-bold text-foreground">
                 {state.asset.originalName}
               </p>
-              <p className="mt-1 text-xs text-[var(--muted)]">
-                {state.asset.detectedType} · {formatFileSize(state.asset.sizeBytes)}
+              <p className="mt-1 text-xs text-muted">
+                {state.asset.detectedType}, {formatFileSize(state.asset.sizeBytes)}
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">{state.notice}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{state.notice}</p>
             </div>
-          </div>
+          </motion.div>
         ) : null}
 
         {state.status === "error" ? (
-          <div role="alert" className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_38%,var(--border))] bg-[color-mix(in_srgb,var(--danger)_8%,var(--surface))] p-4">
-            <Warning aria-hidden="true" size={22} weight="fill" className="shrink-0 text-[var(--danger)]" />
+          <motion.div
+            key="error"
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            role="alert"
+            className="flex items-start gap-3 rounded-card border border-[color-mix(in_srgb,var(--danger)_38%,var(--border))] bg-[color-mix(in_srgb,var(--danger)_8%,var(--surface))] p-4"
+          >
+            <Warning aria-hidden="true" size={22} weight="fill" className="shrink-0 text-danger" />
             <div>
-              <p className="text-sm font-bold text-[var(--danger)]">Falha no envio</p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{state.message}</p>
+              <p className="text-sm font-bold text-danger">Falha no envio</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted">{state.message}</p>
               {selectedFile ? (
                 <button
                   type="button"
                   onClick={() => void upload(selectedFile)}
-                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--border)] px-4 text-sm font-bold text-[var(--foreground)] hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] active:translate-y-px"
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-bold text-foreground hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-px"
                 >
                   <ArrowClockwise aria-hidden="true" size={17} weight="bold" />
                   Tentar novamente
                 </button>
               ) : null}
             </div>
-          </div>
+          </motion.div>
         ) : null}
 
         {state.status === "idle" && selectedFile ? (
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface-strong)] p-4">
-            <File aria-hidden="true" size={22} className="text-[var(--accent)]" />
-            <p className="truncate text-sm font-semibold text-[var(--foreground)]">{selectedFile.name}</p>
-          </div>
+          <motion.div
+            key="idle-file"
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-3 rounded-card bg-surface-strong p-4"
+          >
+            <File aria-hidden="true" size={22} className="text-accent" />
+            <p className="truncate text-sm font-semibold text-foreground">{selectedFile.name}</p>
+          </motion.div>
         ) : null}
+        </AnimatePresence>
       </div>
     </div>
   );

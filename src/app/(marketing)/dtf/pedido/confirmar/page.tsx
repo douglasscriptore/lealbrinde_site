@@ -30,7 +30,7 @@ export default async function ConfirmDtfOrderPage({ searchParams }: PageProps) {
   }
 
   return (
-    <main id="conteudo" className="page-shell py-10 sm:py-16">
+    <main id="conteudo" className="mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
       <div className="mx-auto max-w-3xl">
         <VerifiedPixPayment orderCode={order.code} />
       </div>

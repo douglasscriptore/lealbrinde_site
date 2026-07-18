@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InfoPage } from "@/components/content/info-page";
+import { WristbandsPrelaunch } from "@/components/marketing/wristbands-prelaunch";
 
 export const metadata: Metadata = {
   title: "Pulseiras e cordões",
@@ -7,11 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function WristbandsPage() {
-  return (
-    <InfoPage
-      label="Em desenvolvimento"
-      title="Pulseiras, fitas e cordões"
-      description="Este setor está sendo preparado com produtos, materiais e opções de personalização. Ele será publicado quando o catálogo estiver completo."
-    />
-  );
+  return <WristbandsPrelaunch />;
 }

@@ -44,17 +44,17 @@ export default async function AdminOrderPage({
   return (
     <div className="space-y-6">
       <Link
-        className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"
+        className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600"
         href="/admin/pedidos"
       >
         <ArrowLeft aria-hidden="true" size={18} />
         Voltar aos pedidos
       </Link>
 
-      <header className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="font-mono text-sm font-black text-[#006E91] dark:text-[#72D9F7]">
+            <p className="font-mono text-sm font-black text-accent-strong">
               {detail.order.code}
             </p>
             <OrderStatusBadge order={detail.order} />
@@ -62,8 +62,8 @@ export default async function AdminOrderPage({
           <h2 className="mt-2 text-2xl font-black tracking-tight">
             {detail.order.customerName}
           </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {detail.order.productName} · {detail.order.quantityLabel}
+          <p className="mt-1 text-sm text-slate-600">
+            {detail.order.productName}, {detail.order.quantityLabel}
           </p>
         </div>
         <p className="text-2xl font-black tracking-tight">
@@ -73,7 +73,7 @@ export default async function AdminOrderPage({
 
       {feedback.erro ? (
         <p
-          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800"
           role="alert"
         >
           {feedback.erro.slice(0, 500)}
@@ -81,7 +81,7 @@ export default async function AdminOrderPage({
       ) : null}
       {feedback.sucesso ? (
         <p
-          className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800"
           role="status"
         >
           {feedback.sucesso.slice(0, 300)}
@@ -89,14 +89,14 @@ export default async function AdminOrderPage({
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <OrderTimeline events={detail.timeline} title="Histórico operacional" />
         </section>
 
         <aside className="space-y-4" aria-label="Estados do pedido">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-3">
-              <Package aria-hidden="true" className="text-[#007FA8]" size={22} />
+              <Package aria-hidden="true" className="text-accent" size={22} />
               <h2 className="font-black">Estados independentes</h2>
             </div>
             <dl className="mt-4 space-y-3 text-sm">
@@ -105,10 +105,10 @@ export default async function AdminOrderPage({
               <StatusRow label="Produção" value={detail.productionStatusLabel} />
               <StatusRow label="Recebimento" value={detail.fulfillmentStatusLabel} />
             </dl>
-            <p className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+            <p className="mt-4 border-t border-slate-200 pt-4 text-sm text-slate-600">
               Modalidade: <strong>{detail.fulfillmentMethodLabel}</strong>
             </p>
-            <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               Até {detail.customLeadTimeAboveMeters} metros, o início ocorre em até{" "}
               {detail.standardStartWithinBusinessHours}{" "}
               {detail.standardStartWithinBusinessHours === 1
@@ -117,19 +117,19 @@ export default async function AdminOrderPage({
               depois do Pix e da arte aprovados. Acima desse volume, o prazo é manual.
             </p>
             {detail.manualLeadTimeNote ? (
-              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm leading-5 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
+              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm leading-5 text-amber-900">
                 {detail.manualLeadTimeNote}
               </p>
             ) : null}
           </section>
 
           {detail.canViewFiscal ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="flex items-center gap-3">
-                <Receipt aria-hidden="true" className="text-[#007FA8]" size={22} />
+                <Receipt aria-hidden="true" className="text-accent" size={22} />
                 <h2 className="font-black">Financeiro e fiscal</h2>
               </div>
-              <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+              <p className="mt-4 text-sm text-slate-600">
                 {detail.paymentAttempts.length} tentativa(s) de pagamento e{" "}
                 {detail.fiscalDocumentCount} documento(s) fiscal(is).
               </p>
@@ -142,8 +142,8 @@ export default async function AdminOrderPage({
                         href={document.downloadHref}
                       >
                         <span>
-                          {document.title} · {document.versionLabel}
-                          {document.current ? " · atual" : ""}
+                          {document.title}, {document.versionLabel}
+                          {document.current ? ", atual" : ""}
                         </span>
                         <DownloadSimple aria-hidden="true" size={18} />
                       </a>
@@ -155,12 +155,12 @@ export default async function AdminOrderPage({
               ["BLOCKED", "QUEUED"].includes(detail.productionStatus) ? (
                 <form action={refundPaymentAction} className="mt-4">
                   <input name="orderId" type="hidden" value={detail.order.id} />
-                  <label className="mb-3 flex items-start gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                  <label className="mb-3 flex items-start gap-2 text-xs leading-5 text-slate-600">
                     <input className="mt-1" name="confirmRefund" required type="checkbox" value="true" />
                     Confirmo o reembolso integral deste Pix. A ação fica registrada na auditoria.
                   </label>
                   <button
-                    className="inline-flex min-h-11 items-center rounded-xl border border-red-300 px-4 text-sm font-bold text-red-700 dark:border-red-800 dark:text-red-300"
+                    className="inline-flex min-h-11 items-center rounded-xl border border-red-300 px-4 text-sm font-bold text-red-700"
                     type="submit"
                   >
                     Registrar reembolso integral
@@ -178,13 +178,13 @@ export default async function AdminOrderPage({
       ) : null}
 
       {detail.canViewArtwork ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex items-center gap-3">
-            <FileImage aria-hidden="true" className="text-[#007FA8]" size={22} />
+            <FileImage aria-hidden="true" className="text-accent" size={22} />
             <h2 className="text-lg font-black">Versões da arte</h2>
           </div>
           {detail.artworkVersions.length ? (
-            <ul className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+            <ul className="mt-4 divide-y divide-slate-200">
               {detail.artworkVersions.map((version) => (
                 <li
                   className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"
@@ -192,8 +192,8 @@ export default async function AdminOrderPage({
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold">{version.name}</p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {version.versionLabel} · {version.statusLabel}
+                    <p className="mt-1 text-xs text-slate-500">
+                      {version.versionLabel}, {version.statusLabel}
                     </p>
                   </div>
                   <Link className={secondaryButtonClasses} href={version.href}>
@@ -226,9 +226,9 @@ type WorkflowDetail = NonNullable<Awaited<ReturnType<typeof getAdminOrderDetail>
 
 function WorkflowActions({ detail }: { detail: WorkflowDetail }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
       <h2 className="text-lg font-black">Ações operacionais</h2>
-      <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+      <p className="mt-1 text-sm leading-6 text-slate-600">
         Cada mudança registra o usuário, o estado anterior e o novo estado na auditoria.
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
@@ -245,7 +245,7 @@ function WorkflowActions({ detail }: { detail: WorkflowDetail }) {
               <label className="text-sm font-bold">
                 Prazo combinado acima de {detail.customLeadTimeAboveMeters} metros
                 <textarea
-                  className="mt-2 min-h-24 w-full rounded-xl border bg-white p-3 font-normal dark:bg-slate-950"
+                  className="mt-2 min-h-24 w-full rounded-xl border bg-white p-3 font-normal"
                   name="manualLeadTimeNote"
                   required
                 />
@@ -298,7 +298,7 @@ function WorkflowButton({
       <button
         className={
           danger
-            ? "inline-flex min-h-11 items-center rounded-xl border border-red-300 px-4 text-sm font-bold text-red-700 dark:border-red-800 dark:text-red-300"
+            ? "inline-flex min-h-11 items-center rounded-xl border border-red-300 px-4 text-sm font-bold text-red-700"
             : secondaryButtonClasses
         }
         type="submit"

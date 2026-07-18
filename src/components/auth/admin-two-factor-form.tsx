@@ -64,7 +64,7 @@ export function AdminTwoFactorForm() {
         <input
           autoComplete="one-time-code"
           autoFocus
-          className="min-h-12 w-full rounded-[10px] border bg-background px-4 font-mono text-lg tracking-[0.12em] text-foreground"
+          className="min-h-12 w-full rounded-control border bg-background px-4 font-mono text-lg tracking-[0.12em] text-foreground"
           id="two-factor-code"
           inputMode={method === "totp" ? "numeric" : "text"}
           maxLength={method === "totp" ? 6 : undefined}

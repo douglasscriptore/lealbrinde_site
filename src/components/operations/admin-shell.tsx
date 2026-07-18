@@ -70,8 +70,8 @@ function SignOutControl({
   mobile?: boolean;
 }) {
   const classes = mobile
-    ? "mt-3 flex min-h-11 w-full items-center gap-3 border-t border-slate-200 px-3 pt-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:border-slate-700 dark:text-slate-300"
-    : "grid size-11 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white";
+    ? "mt-3 flex min-h-11 w-full items-center gap-3 border-t border-slate-200 px-3 pt-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    : "grid size-11 shrink-0 place-items-center rounded-control text-muted transition-[transform,color,background-color] hover:-translate-y-0.5 hover:bg-surface-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:translate-y-px";
   const content = (
     <>
       <SignOut aria-hidden="true" size={20} />
@@ -112,10 +112,10 @@ function NavigationList({
             <li key={item.href}>
               <a
                 aria-current={isActive ? "page" : undefined}
-                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] ${
+                className={`flex min-h-11 items-center gap-3 rounded-control px-3 py-2.5 text-sm font-semibold transition-[transform,color,background-color,box-shadow] ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                   isActive
-                    ? "bg-[#E5F8FE] text-[#006E91] dark:bg-[#073A4A] dark:text-[#72D9F7]"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    ? "bg-accent-soft text-accent-strong shadow-[inset_3px_0_0_var(--accent)]"
+                    : "text-muted hover:translate-x-0.5 hover:bg-surface-strong hover:text-foreground"
                 }`}
                 href={item.href}
               >
@@ -124,7 +124,7 @@ function NavigationList({
                 {typeof item.badge === "number" && item.badge > 0 ? (
                   <span
                     aria-label={`${item.badge} pendências`}
-                    className="min-w-6 rounded-full bg-slate-200 px-1.5 py-0.5 text-center text-xs font-bold text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+                    className="min-w-6 rounded-full bg-slate-200 px-1.5 py-0.5 text-center text-xs font-bold text-slate-800"
                   >
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
@@ -158,25 +158,25 @@ export function AdminShell({
     navigation ?? defaultNavigation.filter((item) => item.roles.includes(accessRole));
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+    <div className="min-h-[100dvh] bg-background text-foreground">
       <a
-        className="fixed left-3 top-3 z-50 -translate-y-20 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white focus:translate-y-0 dark:bg-white dark:text-slate-950"
+        className="fixed left-3 top-3 z-50 -translate-y-20 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white focus:translate-y-0"
         href="#conteudo-principal"
       >
         Pular para o conteúdo
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-border bg-white/95 p-5 shadow-[8px_0_36px_rgb(28_78_96/0.06)] backdrop-blur lg:flex lg:flex-col">
         <a
-          className="mb-7 flex min-h-12 items-center gap-3 rounded-xl px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF]"
+          className="mb-7 flex min-h-12 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           href={brandHref}
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-[#007FA8] text-sm font-black tracking-tight text-white">
+          <span className="grid size-10 place-items-center rounded-control bg-accent text-sm font-black tracking-tight text-white shadow-premium">
             LB
           </span>
           <span>
             <span className="block font-black tracking-tight">{brandName}</span>
-            <span className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span className="block text-xs font-medium text-slate-500">
               Operações
             </span>
           </span>
@@ -186,14 +186,14 @@ export function AdminShell({
           <NavigationList currentPath={resolvedPath} items={resolvedNavigation} />
         </div>
 
-        <div className="mt-5 border-t border-slate-200 pt-5 dark:border-slate-800">
+        <div className="mt-5 border-t border-border pt-5">
           <div className="flex items-center gap-3 px-2">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-strong text-xs font-black text-foreground ring-1 ring-border">
               {identity.initials}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{identity.name}</span>
-              <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+              <span className="block truncate text-xs text-slate-500">
                 {identity.role}
               </span>
             </span>
@@ -203,20 +203,20 @@ export function AdminShell({
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:static">
+        <header className="sticky top-0 z-30 border-b border-border bg-white/92 shadow-[0_10px_32px_rgb(28_78_96/0.06)] backdrop-blur-xl lg:static lg:shadow-none">
           <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:hidden">
             <a className="flex items-center gap-2 font-black tracking-tight" href={brandHref}>
-              <span className="grid size-9 place-items-center rounded-xl bg-[#007FA8] text-xs text-white">
+              <span className="grid size-9 place-items-center rounded-control bg-accent text-xs text-white shadow-premium">
                 LB
               </span>
               {brandName}
             </a>
             <details className="group relative">
-              <summary className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-slate-300 bg-white text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+              <summary className="grid size-11 cursor-pointer list-none place-items-center rounded-control border border-border bg-white text-foreground shadow-sm transition hover:border-accent/45 hover:shadow-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <List aria-hidden="true" size={22} weight="bold" />
                 <span className="sr-only">Abrir navegação</span>
               </summary>
-              <div className="absolute right-0 top-13 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900">
+              <div className="absolute right-0 top-13 w-[min(22rem,calc(100vw-2rem))] rounded-card border border-border bg-white p-3 shadow-premium-hover">
                 <NavigationList currentPath={resolvedPath} items={resolvedNavigation} />
                 <SignOutControl action={signOutAction} href={signOutHref} mobile />
               </div>
@@ -225,11 +225,11 @@ export function AdminShell({
 
           <div className="mx-auto hidden max-w-[1500px] items-end justify-between gap-6 px-8 py-7 lg:flex">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+              <h1 className="text-2xl font-black tracking-tight text-slate-950">
                 {title}
               </h1>
               {description ? (
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
                   {description}
                 </p>
               ) : null}
@@ -245,7 +245,7 @@ export function AdminShell({
           <div className="mb-6 lg:hidden">
             <h1 className="text-2xl font-black tracking-tight">{title}</h1>
             {description ? (
-              <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <p className="mt-1 text-sm leading-6 text-slate-600">
                 {description}
               </p>
             ) : null}

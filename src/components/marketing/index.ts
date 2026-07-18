@@ -25,6 +25,8 @@ export { ProcessSection } from "./process-section";
 export { ProductSpecifications } from "./product-specifications";
 export { Reveal } from "./reveal";
 export { SectorGateway } from "./sector-gateway";
+export { ShopeeShowcase } from "./shopee-showcase";
+export { WristbandsPrelaunch } from "./wristbands-prelaunch";
 export type {
   EquipmentCapacity,
   FooterColumn,

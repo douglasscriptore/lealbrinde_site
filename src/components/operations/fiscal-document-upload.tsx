@@ -43,17 +43,17 @@ export function FiscalDocumentUpload({ orderCode }: { orderCode: string }) {
 
   return (
     <form
-      className="mt-5 space-y-4 border-t border-slate-200 pt-5 dark:border-slate-800"
+      className="mt-5 space-y-4 border-t border-slate-200 pt-5"
       onSubmit={submit}
     >
       <div className="flex items-center gap-2">
-        <FilePdfIcon aria-hidden size={20} className="text-[#007FA8]" />
+        <FilePdfIcon aria-hidden size={20} className="text-accent" />
         <h3 className="text-sm font-black">Anexar documento fiscal</h3>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <select
           aria-label="Tipo de documento"
-          className="min-h-11 rounded-xl border bg-white px-3 text-sm dark:bg-slate-950"
+          className="min-h-11 rounded-xl border bg-white px-3 text-sm"
           name="documentType"
           required
         >
@@ -62,14 +62,14 @@ export function FiscalDocumentUpload({ orderCode }: { orderCode: string }) {
         </select>
         <input
           accept="application/pdf,.pdf"
-          className="min-h-11 rounded-xl border bg-white p-2 text-sm dark:bg-slate-950"
+          className="min-h-11 rounded-xl border bg-white p-2 text-sm"
           name="document"
           required
           type="file"
         />
       </div>
       <button
-        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#007FA8] px-4 text-sm font-bold text-white disabled:opacity-60"
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-60"
         disabled={state.status === "uploading"}
         type="submit"
       >
@@ -77,12 +77,12 @@ export function FiscalDocumentUpload({ orderCode }: { orderCode: string }) {
         {state.status === "uploading" ? "Anexando" : "Anexar PDF"}
       </button>
       {state.status === "success" ? (
-        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300" role="status">
+        <p className="text-sm font-bold text-emerald-700" role="status">
           Documento anexado e versionado.
         </p>
       ) : null}
       {state.status === "error" ? (
-        <p className="text-sm font-bold text-red-700 dark:text-red-300" role="alert">
+        <p className="text-sm font-bold text-red-700" role="alert">
           {state.message}
         </p>
       ) : null}

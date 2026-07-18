@@ -5,6 +5,7 @@ import { FaqSection } from "./faq-section";
 import { MarketingHero, type MarketingHeroProps } from "./hero";
 import { ProcessSection } from "./process-section";
 import { SectorGateway } from "./sector-gateway";
+import { ShopeeShowcase } from "./shopee-showcase";
 import type {
   EquipmentCapacity,
   FrequentlyAskedQuestion,
@@ -71,6 +72,7 @@ export function MarketingHomeSections({
       <CapacitySection {...capacity} />
       <FaqSection {...faq} />
       <ClosingCta {...closing} />
+      <ShopeeShowcase />
     </main>
   );
 }

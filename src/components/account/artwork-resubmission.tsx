@@ -63,13 +63,13 @@ export function ArtworkResubmission({
         onAssetChange={linkAsset}
       />
       {state.status === "linking" ? (
-        <p aria-live="polite" className="mt-5 text-sm font-bold text-slate-700 dark:text-slate-200">
+        <p aria-live="polite" className="mt-5 text-sm font-bold text-slate-700">
           Vinculando a nova versão ao pedido.
         </p>
       ) : null}
       {state.status === "success" ? (
         <div
-          className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"
+          className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900"
           role="status"
         >
           <CheckCircleIcon aria-hidden className="mt-0.5 shrink-0" size={21} weight="fill" />
@@ -89,7 +89,7 @@ export function ArtworkResubmission({
       ) : null}
       {state.status === "error" ? (
         <div
-          className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100"
+          className="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900"
           role="alert"
         >
           <WarningIcon aria-hidden className="mt-0.5 shrink-0" size={21} weight="fill" />

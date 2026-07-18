@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main id="conteudo" className="page-shell grid min-h-[70dvh] place-items-center py-16">
+    <main id="conteudo" className="mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-8 grid min-h-[70dvh] place-items-center py-16">
       <section className="max-w-xl text-center">
         <p className="font-mono text-sm font-semibold text-accent">Página não encontrada</p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">Este endereço não está disponível</h1>

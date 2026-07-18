@@ -11,6 +11,7 @@ import {
   Truck,
   Warning,
 } from "@phosphor-icons/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
 
 import { ArtworkUpload } from "./artwork-upload";
@@ -156,6 +157,7 @@ export function DtfOrderForm({
   termsHref = "/termos-de-uso",
   privacyHref = "/politica-de-privacidade",
 }: DtfOrderFormProps) {
+  const shouldReduceMotion = useReducedMotion();
   const initialFulfillment = product.fulfillmentOptions.includes("PICKUP")
     ? "PICKUP"
     : (product.fulfillmentOptions[0] ?? "PICKUP");
@@ -188,6 +190,19 @@ export function DtfOrderForm({
     () => (quantityIsValid ? findQuote(priceTable, quantityMeters) : null),
     [priceTable, quantityIsValid, quantityMeters],
   );
+  const opportunity = useMemo(() => {
+    if (!quote) return null;
+
+    const nextTier = priceTable.tiers
+      .filter((tier) => tier.minimumMeters > quantityMeters)
+      .sort((first, second) => first.minimumMeters - second.minimumMeters)[0];
+    if (!nextTier) return null;
+
+    const nextSubtotalCents = nextTier.minimumMeters * nextTier.unitPriceCents;
+    return nextSubtotalCents < quote.subtotalCents
+      ? { meters: nextTier.minimumMeters, subtotalCents: nextSubtotalCents }
+      : null;
+  }, [priceTable.tiers, quantityMeters, quote]);
 
   function changeQuantity(amount: number) {
     const current = Number.isInteger(quantityMeters) ? quantityMeters : product.minimumMeters;
@@ -332,19 +347,19 @@ export function DtfOrderForm({
 
   if (submitState.status === "verification_required") {
     return (
-      <section className="mx-auto max-w-3xl rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center sm:p-10">
-        <CheckCircle aria-hidden="true" size={48} weight="duotone" className="mx-auto text-[var(--accent)]" />
-        <p className="mt-5 text-sm font-bold text-[var(--accent)]">Pedido {submitState.orderCode}</p>
-        <h1 className="mt-2 text-balance text-3xl font-black tracking-[-0.035em] text-[var(--foreground)] sm:text-4xl">
+      <section className="mx-auto max-w-3xl rounded-2xl border border-border bg-surface p-6 text-center sm:p-10">
+        <CheckCircle aria-hidden="true" size={48} weight="duotone" className="mx-auto text-accent" />
+        <p className="mt-5 text-sm font-bold text-accent">Pedido {submitState.orderCode}</p>
+        <h1 className="mt-2 text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl">
           Verifique seu e-mail antes do Pix
         </h1>
-        <p className="mx-auto mt-5 max-w-[56ch] text-base leading-relaxed text-[var(--muted)]">
+        <p className="mx-auto mt-5 max-w-[56ch] text-base leading-relaxed text-muted">
           {submitState.message ??
             `Enviamos uma confirmação para ${contact.email}. Abra o link recebido para validar sua conta e gerar o pagamento do pedido.`}
         </p>
-        <div className="mx-auto mt-7 max-w-xl rounded-2xl bg-[var(--surface-strong)] p-5 text-left">
-          <p className="text-sm font-bold text-[var(--foreground)]">Nenhum Pix foi criado ainda</p>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+        <div className="mx-auto mt-7 max-w-xl rounded-2xl bg-surface-strong p-5 text-left">
+          <p className="text-sm font-bold text-foreground">Nenhum Pix foi criado ainda</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
             Essa etapa protege seus arquivos, documentos fiscais e o acompanhamento do pedido.
           </p>
         </div>
@@ -366,10 +381,10 @@ export function DtfOrderForm({
             tabIndex={-1}
             className="flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_38%,var(--border))] bg-[color-mix(in_srgb,var(--danger)_8%,var(--surface))] p-5 outline-none"
           >
-            <Warning aria-hidden="true" size={23} weight="fill" className="shrink-0 text-[var(--danger)]" />
+            <Warning aria-hidden="true" size={23} weight="fill" className="shrink-0 text-danger" />
             <div>
-              <p className="font-bold text-[var(--danger)]">Não foi possível criar o pedido</p>
-              <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{errors.form}</p>
+              <p className="font-bold text-danger">Não foi possível criar o pedido</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted">{errors.form}</p>
             </div>
           </div>
         ) : null}
@@ -378,7 +393,7 @@ export function DtfOrderForm({
           title="Quantidade e recebimento"
           description="Defina a metragem e escolha entre retirada no local ou entrega."
         >
-          <label htmlFor="order-meters" className="text-sm font-bold text-[var(--foreground)]">
+          <label htmlFor="order-meters" className="text-sm font-bold text-foreground">
             Quantidade em metros
           </label>
           <div className="mt-2 flex max-w-sm items-center gap-2">
@@ -387,7 +402,7 @@ export function DtfOrderForm({
               onClick={() => changeQuantity(-product.meterIncrement)}
               disabled={quantityMeters <= product.minimumMeters}
               aria-label={`Diminuir ${product.meterIncrement} metro`}
-              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] active:translate-y-px"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground hover:border-accent disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-px"
             >
               <Minus aria-hidden="true" size={18} weight="bold" />
             </button>
@@ -405,28 +420,54 @@ export function DtfOrderForm({
                 }}
                 aria-invalid={Boolean(errors.quantity)}
                 aria-describedby={errors.quantity ? "order-meters-error" : undefined}
-                className="h-12 w-full rounded-[10px] border border-[var(--border)] bg-[var(--background)] px-4 pr-16 text-base font-bold tabular-nums text-[var(--foreground)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]"
+                className="h-12 w-full rounded-control border border-border bg-background px-4 pr-16 text-base font-bold tabular-nums text-foreground outline-none focus:border-accent focus:ring-4 focus:ring-[color-mix(in_srgb,var(--accent)_18%,transparent)]"
               />
-              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-[var(--muted)]">m</span>
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-semibold text-muted">m</span>
             </div>
             <button
               type="button"
               onClick={() => changeQuantity(product.meterIncrement)}
               aria-label={`Aumentar ${product.meterIncrement} metro`}
-              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] active:translate-y-px"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-px"
             >
               <Plus aria-hidden="true" size={18} weight="bold" />
             </button>
           </div>
           {errors.quantity ? (
-            <p id="order-meters-error" className="mt-2 text-sm font-semibold text-[var(--danger)]">{errors.quantity}</p>
+            <p id="order-meters-error" className="mt-2 text-sm font-semibold text-danger">{errors.quantity}</p>
           ) : null}
 
+          <AnimatePresence initial={false}>
+            {opportunity ? (
+              <motion.div
+                key={opportunity.meters}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+                className="mt-5 rounded-card border border-accent/30 bg-accent-soft/45 p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.9)]"
+              >
+                <p className="flex items-start gap-2 text-sm font-semibold leading-relaxed text-foreground">
+                  <Info aria-hidden="true" size={18} weight="fill" className="mt-0.5 shrink-0 text-accent" />
+                  <span>
+                    {opportunity.meters} metros custam {formatMoney(opportunity.subtotalCents)} na próxima faixa.
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setQuantityInput(String(opportunity.meters))}
+                  className="mt-3 rounded-full border border-accent px-4 py-2 text-sm font-bold text-accent transition-[transform,color,background-color] hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:scale-[0.98]"
+                >
+                  Alterar para {opportunity.meters} metros
+                </button>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
           <fieldset className="mt-8">
-            <legend className="text-sm font-bold text-[var(--foreground)]">Como deseja receber?</legend>
+            <legend className="text-sm font-bold text-foreground">Como deseja receber?</legend>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {product.fulfillmentOptions.includes("PICKUP") ? (
-                <label className={`flex min-h-28 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${fulfillmentMethod === "PICKUP" ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))]" : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--accent)]"}`}>
+                <label className={`flex min-h-28 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${fulfillmentMethod === "PICKUP" ? "border-accent bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))]" : "border-border bg-background hover:border-accent"}`}>
                   <input
                     type="radio"
                     name="fulfillment"
@@ -435,15 +476,15 @@ export function DtfOrderForm({
                     onChange={() => setFulfillmentMethod("PICKUP")}
                     className="mt-1 accent-[var(--accent)]"
                   />
-                  <Storefront aria-hidden="true" size={24} weight="duotone" className="shrink-0 text-[var(--accent)]" />
+                  <Storefront aria-hidden="true" size={24} weight="duotone" className="shrink-0 text-accent" />
                   <span>
-                    <strong className="block text-sm text-[var(--foreground)]">Retirada no local</strong>
-                    <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">Avisaremos quando estiver pronto.</span>
+                    <strong className="block text-sm text-foreground">Retirada no local</strong>
+                    <span className="mt-1 block text-xs leading-relaxed text-muted">Avisaremos quando estiver pronto.</span>
                   </span>
                 </label>
               ) : null}
               {product.fulfillmentOptions.includes("SHIPPING") ? (
-                <label className={`flex min-h-28 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${fulfillmentMethod === "SHIPPING" ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))]" : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--accent)]"}`}>
+                <label className={`flex min-h-28 cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors ${fulfillmentMethod === "SHIPPING" ? "border-accent bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))]" : "border-border bg-background hover:border-accent"}`}>
                   <input
                     type="radio"
                     name="fulfillment"
@@ -452,10 +493,10 @@ export function DtfOrderForm({
                     onChange={() => setFulfillmentMethod("SHIPPING")}
                     className="mt-1 accent-[var(--accent)]"
                   />
-                  <Truck aria-hidden="true" size={24} weight="duotone" className="shrink-0 text-[var(--accent)]" />
+                  <Truck aria-hidden="true" size={24} weight="duotone" className="shrink-0 text-accent" />
                   <span>
-                    <strong className="block text-sm text-[var(--foreground)]">Receber por entrega</strong>
-                    <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">Frete confirmado no servidor antes do Pix.</span>
+                    <strong className="block text-sm text-foreground">Receber por entrega</strong>
+                    <span className="mt-1 block text-xs leading-relaxed text-muted">Frete confirmado no servidor antes do Pix.</span>
                   </span>
                 </label>
               ) : null}
@@ -503,11 +544,11 @@ export function DtfOrderForm({
             }}
           />
           {errors.artwork ? (
-            <p role="alert" className="mt-3 text-sm font-semibold text-[var(--danger)]">{errors.artwork}</p>
+            <p role="alert" className="mt-3 text-sm font-semibold text-danger">{errors.artwork}</p>
           ) : null}
           {product.printableWidthCm ? (
-            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-[var(--muted)]">
-              <Info aria-hidden="true" size={17} weight="fill" className="mt-0.5 shrink-0 text-[var(--accent)]" />
+            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted">
+              <Info aria-hidden="true" size={17} weight="fill" className="mt-0.5 shrink-0 text-accent" />
               Largura útil configurada: {product.printableWidthCm} cm.
             </p>
           ) : null}
@@ -524,21 +565,21 @@ export function DtfOrderForm({
         </CheckoutSection>
 
         <CheckoutSection title="Dados fiscais" description="Escolha se deseja nota fiscal e informe os dados de pessoa física ou jurídica.">
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[var(--background)] p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-background p-4">
             <input type="checkbox" checked={fiscal.issueInvoice} onChange={(event) => setFiscal((current) => ({ ...current, issueInvoice: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" />
             <span>
-              <strong className="block text-sm text-[var(--foreground)]">Quero nota fiscal</strong>
-              <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">O documento ficará disponível no acompanhamento do pedido.</span>
+              <strong className="block text-sm text-foreground">Quero nota fiscal</strong>
+              <span className="mt-1 block text-xs leading-relaxed text-muted">O documento ficará disponível no acompanhamento do pedido.</span>
             </span>
           </label>
 
           {fiscal.issueInvoice ? (
             <div className="mt-6">
               <fieldset>
-                <legend className="text-sm font-bold text-[var(--foreground)]">Tipo de pessoa</legend>
+                <legend className="text-sm font-bold text-foreground">Tipo de pessoa</legend>
                 <div className="mt-3 flex flex-wrap gap-3">
                   {(["PF", "PJ"] as const).map((personType) => (
-                    <label key={personType} className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-bold ${fiscal.personType === personType ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,var(--surface))] text-[var(--accent)]" : "border-[var(--border)] text-[var(--foreground)]"}`}>
+                    <label key={personType} className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-bold ${fiscal.personType === personType ? "border-accent bg-[color-mix(in_srgb,var(--accent)_9%,var(--surface))] text-accent" : "border-border text-foreground"}`}>
                       <input type="radio" name="person-type" value={personType} checked={fiscal.personType === personType} onChange={() => { setFiscal((current) => ({ ...current, personType, document: "", stateRegistration: "" })); setErrors((current) => ({ ...current, fiscalDocument: undefined })); }} className="accent-[var(--accent)]" />
                       {personType === "PF" ? "Pessoa física" : "Pessoa jurídica"}
                     </label>
@@ -548,7 +589,7 @@ export function DtfOrderForm({
 
               <label className="mt-6 flex cursor-pointer items-start gap-3">
                 <input type="checkbox" checked={fiscal.copyContactData} onChange={(event) => setFiscal((current) => ({ ...current, copyContactData: event.target.checked }))} className="mt-1 size-4 accent-[var(--accent)]" />
-                <span className="text-sm font-semibold text-[var(--foreground)]">Usar nome, e-mail e telefone informados no pedido</span>
+                <span className="text-sm font-semibold text-foreground">Usar nome, e-mail e telefone informados no pedido</span>
               </label>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -567,13 +608,13 @@ export function DtfOrderForm({
                 ) : null}
               </div>
               {fiscal.copyContactData && (errors.fiscalName || errors.fiscalEmail || errors.fiscalPhone) ? (
-                <p className="mt-4 text-sm font-semibold text-[var(--danger)]">Corrija os dados de contato usados na nota fiscal.</p>
+                <p className="mt-4 text-sm font-semibold text-danger">Corrija os dados de contato usados na nota fiscal.</p>
               ) : null}
             </div>
           ) : null}
         </CheckoutSection>
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+        <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"
@@ -586,63 +627,81 @@ export function DtfOrderForm({
               aria-describedby={errors.terms ? "terms-error" : undefined}
               className="mt-1 size-4 accent-[var(--accent)]"
             />
-            <span className="text-sm leading-relaxed text-[var(--muted)]">
-              Li e aceito os <a href={termsHref} target="_blank" rel="noreferrer" className="font-bold text-[var(--foreground)] underline decoration-[var(--accent)] underline-offset-4">termos de uso</a> e a <a href={privacyHref} target="_blank" rel="noreferrer" className="font-bold text-[var(--foreground)] underline decoration-[var(--accent)] underline-offset-4">política de privacidade</a>.
+            <span className="text-sm leading-relaxed text-muted">
+              Li e aceito os <a href={termsHref} target="_blank" rel="noreferrer" className="font-bold text-foreground underline decoration-[var(--accent)] underline-offset-4">termos de uso</a> e a <a href={privacyHref} target="_blank" rel="noreferrer" className="font-bold text-foreground underline decoration-[var(--accent)] underline-offset-4">política de privacidade</a>.
             </span>
           </label>
-          {errors.terms ? <p id="terms-error" className="mt-3 text-sm font-semibold text-[var(--danger)]">{errors.terms}</p> : null}
+          {errors.terms ? <p id="terms-error" className="mt-3 text-sm font-semibold text-danger">{errors.terms}</p> : null}
         </div>
       </div>
 
-      <aside className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 lg:sticky lg:top-24 sm:p-6" aria-labelledby="order-summary-title">
+      <aside className="rounded-2xl border border-border bg-surface p-5 lg:sticky lg:top-24 sm:p-6" aria-labelledby="order-summary-title">
         <div className="flex items-start gap-3">
-          <Package aria-hidden="true" size={28} weight="duotone" className="shrink-0 text-[var(--accent)]" />
+          <Package aria-hidden="true" size={28} weight="duotone" className="shrink-0 text-accent" />
           <div>
-            <h2 id="order-summary-title" className="text-xl font-black tracking-[-0.025em] text-[var(--foreground)]">Resumo do pedido</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">{product.name}</p>
+            <h2 id="order-summary-title" className="text-xl font-black tracking-[-0.025em] text-foreground">Resumo do pedido</h2>
+            <p className="mt-1 text-sm text-muted">{product.name}</p>
           </div>
         </div>
 
-        <dl className="mt-7 grid gap-4 text-sm">
+        <AnimatePresence initial={false} mode="wait">
+        <motion.dl
+          key={quote ? `${quote.tier.minimumMeters}-${quantityMeters}` : "invalid"}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+          className="mt-7 grid gap-4 text-sm"
+        >
           <div className="flex items-start justify-between gap-5">
-            <dt className="text-[var(--muted)]">Quantidade</dt>
-            <dd className="font-bold tabular-nums text-[var(--foreground)]">{quantityIsValid ? `${quantityMeters} m` : "Inválida"}</dd>
+            <dt className="text-muted">Quantidade</dt>
+            <dd className="font-bold tabular-nums text-foreground">{quantityIsValid ? `${quantityMeters} m` : "Inválida"}</dd>
           </div>
           <div className="flex items-start justify-between gap-5">
-            <dt className="text-[var(--muted)]">Valor por metro</dt>
-            <dd className="font-bold tabular-nums text-[var(--foreground)]">{quote ? formatMoney(quote.tier.unitPriceCents) : "A calcular"}</dd>
+            <dt className="text-muted">Valor por metro</dt>
+            <dd className="font-bold tabular-nums text-foreground">{quote ? formatMoney(quote.tier.unitPriceCents) : "A calcular"}</dd>
           </div>
           <div className="flex items-start justify-between gap-5">
-            <dt className="text-[var(--muted)]">Recebimento</dt>
-            <dd className="text-right font-bold text-[var(--foreground)]">{fulfillmentMethod === "PICKUP" ? "Retirada" : "Entrega"}</dd>
+            <dt className="text-muted">Recebimento</dt>
+            <dd className="text-right font-bold text-foreground">{fulfillmentMethod === "PICKUP" ? "Retirada" : "Entrega"}</dd>
           </div>
           {fulfillmentMethod === "SHIPPING" ? (
             <div className="flex items-start justify-between gap-5">
-              <dt className="text-[var(--muted)]">Frete</dt>
-              <dd className="text-right font-bold text-[var(--foreground)]">Confirmado no servidor</dd>
+              <dt className="text-muted">Frete</dt>
+              <dd className="text-right font-bold text-foreground">Confirmado no servidor</dd>
             </div>
           ) : null}
           <div className="flex items-start justify-between gap-5">
-            <dt className="text-[var(--muted)]">Arquivo</dt>
-            <dd className={`text-right font-bold ${artworkAsset ? "text-[var(--success)]" : "text-[var(--muted)]"}`}>
+            <dt className="text-muted">Arquivo</dt>
+            <dd className={`text-right font-bold ${artworkAsset ? "text-success" : "text-muted"}`}>
               {artworkAsset ? "Recebido" : "Pendente"}
             </dd>
           </div>
-        </dl>
+        </motion.dl>
+        </AnimatePresence>
 
-        <div className="mt-6 border-t border-[var(--border)] pt-6">
+        <div className="mt-6 border-t border-border pt-6">
           <div className="flex items-end justify-between gap-5">
-            <p className="text-sm font-bold text-[var(--muted)]">Subtotal</p>
-            <p className="text-3xl font-black tracking-[-0.035em] tabular-nums text-[var(--foreground)]">{quote ? formatMoney(quote.subtotalCents) : "A calcular"}</p>
+            <p className="text-sm font-bold text-muted">Subtotal</p>
+            <AnimatePresence initial={false} mode="wait">
+              <motion.p
+                key={quote?.subtotalCents ?? "invalid"}
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+                className="text-3xl font-black tracking-[-0.035em] tabular-nums text-foreground"
+              >
+                {quote ? formatMoney(quote.subtotalCents) : "A calcular"}
+              </motion.p>
+            </AnimatePresence>
           </div>
           {fulfillmentMethod === "SHIPPING" ? (
-            <p className="mt-3 text-xs leading-relaxed text-[var(--muted)]">O valor final inclui o frete confirmado pelo servidor antes da criação do Pix.</p>
+            <p className="mt-3 text-xs leading-relaxed text-muted">O valor final inclui o frete confirmado pelo servidor antes da criação do Pix.</p>
           ) : null}
         </div>
 
         {quantityIsValid ? (
-          <div className="mt-5 flex items-start gap-2 rounded-2xl bg-[var(--surface-strong)] p-4 text-xs leading-relaxed text-[var(--muted)]">
-            <Info aria-hidden="true" size={17} weight="fill" className="mt-0.5 shrink-0 text-[var(--accent)]" />
+          <div className="mt-5 flex items-start gap-2 rounded-2xl bg-surface-strong p-4 text-xs leading-relaxed text-muted">
+            <Info aria-hidden="true" size={17} weight="fill" className="mt-0.5 shrink-0 text-accent" />
             {quantityMeters > product.customLeadTimeAboveMeters
               ? `O prazo de pedidos acima de ${product.customLeadTimeAboveMeters} metros é confirmado conforme a fila de produção.`
               : `O início da produção ocorre em até ${product.standardStartWithinBusinessHours} ${product.standardStartWithinBusinessHours === 1 ? "hora útil" : "horas úteis"} depois do Pix confirmado e da arte aprovada.`}
@@ -652,7 +711,7 @@ export function DtfOrderForm({
         <button
           type="submit"
           disabled={submitState.status === "submitting" || !quote || !artworkAsset}
-          className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--accent)] px-5 text-sm font-bold text-[var(--accent-foreground)] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--foreground)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none"
+          className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-accent px-5 text-sm font-bold text-accent-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none"
         >
           {submitState.status === "submitting" ? (
             <>
@@ -666,8 +725,8 @@ export function DtfOrderForm({
             </>
           )}
         </button>
-        <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-[var(--muted)]">
-          <CheckCircle aria-hidden="true" size={16} weight="fill" className="mt-0.5 shrink-0 text-[var(--accent)]" />
+        <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted">
+          <CheckCircle aria-hidden="true" size={16} weight="fill" className="mt-0.5 shrink-0 text-accent" />
           O servidor recalcula o preço e exige a verificação do e-mail antes do Pix.
         </p>
       </aside>

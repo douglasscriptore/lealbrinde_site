@@ -60,7 +60,7 @@ export function ProductList({
           <h2 className="text-lg font-black tracking-tight" id="products-title">
             Produtos
           </h2>
-          <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <p className="mt-1 text-sm leading-6 text-slate-600">
             Cadastre produtos, publique novas tabelas de preço e preserve o histórico.
           </p>
         </div>
@@ -74,14 +74,14 @@ export function ProductList({
         <label className="sr-only" htmlFor="product-search">
           Buscar por produto, código ou slug
         </label>
-        <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-[#008CB8] focus-within:ring-2 focus-within:ring-[#00AEEF]/30 dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
           <MagnifyingGlass
             aria-hidden="true"
-            className="ml-3.5 shrink-0 text-slate-500 dark:text-slate-400"
+            className="ml-3.5 shrink-0 text-slate-500"
             size={19}
           />
           <input
-            className="min-h-11 min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-slate-950 outline-none placeholder:text-slate-500 dark:text-white dark:placeholder:text-slate-400"
+            className="min-h-11 min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-slate-950 outline-none placeholder:text-slate-500"
             defaultValue={query}
             id="product-search"
             name="q"
@@ -89,7 +89,7 @@ export function ProductList({
             type="search"
           />
           <button
-            className="mr-1 min-h-9 shrink-0 rounded-lg px-3 text-sm font-bold text-[#006E91] transition hover:bg-[#E5F8FE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:text-[#72D9F7] dark:hover:bg-[#073A4A]"
+            className="mr-1 min-h-9 shrink-0 rounded-lg px-3 text-sm font-bold text-accent-strong transition hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             type="submit"
           >
             Buscar
@@ -124,16 +124,16 @@ export function ProductList({
           <div className="space-y-3 md:hidden">
             {products.map((product) => (
               <article
-                className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                className="rounded-2xl border border-slate-200 bg-white p-5"
                 key={product.id}
               >
                 <div className="flex items-start gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                     <Package aria-hidden="true" size={20} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start gap-2">
-                      <h3 className="min-w-0 flex-1 font-bold text-slate-950 dark:text-white">
+                      <h3 className="min-w-0 flex-1 font-bold text-slate-950">
                         {product.name}
                       </h3>
                       {product.featured ? (
@@ -145,28 +145,28 @@ export function ProductList({
                         />
                       ) : null}
                     </div>
-                    <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 font-mono text-xs text-slate-500">
                       {product.code}
                     </p>
                   </div>
                 </div>
-                <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-slate-200 py-4 text-sm dark:border-slate-800">
+                <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-slate-200 py-4 text-sm">
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">Estado</dt>
+                    <dt className="text-xs text-slate-500">Estado</dt>
                     <dd className="mt-1">
                       <ProductStatusBadge status={product.status} />
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">Preço</dt>
+                    <dt className="text-xs text-slate-500">Preço</dt>
                     <dd className="mt-1 font-semibold">{product.priceSummary}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">Tipo</dt>
+                    <dt className="text-xs text-slate-500">Tipo</dt>
                     <dd className="mt-1 font-semibold">{product.typeLabel}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500 dark:text-slate-400">Atualizado</dt>
+                    <dt className="text-xs text-slate-500">Atualizado</dt>
                     <dd className="mt-1 font-semibold">{product.updatedAtLabel}</dd>
                   </div>
                 </dl>
@@ -178,7 +178,7 @@ export function ProductList({
                   {product.previewHref ? (
                     <a
                       aria-label={`Pré-visualizar ${product.name}`}
-                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
+                      className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       href={product.previewHref}
                     >
                       <ArrowSquareOut aria-hidden="true" size={19} />
@@ -189,11 +189,11 @@ export function ProductList({
             ))}
           </div>
 
-          <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:block">
+          <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white md:block">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] border-collapse text-left">
                 <caption className="sr-only">Lista de produtos cadastrados</caption>
-                <thead className="bg-slate-50 text-xs font-bold text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+                <thead className="bg-slate-50 text-xs font-bold text-slate-600">
                   <tr>
                     <th className="px-5 py-3" scope="col">Produto</th>
                     <th className="px-5 py-3" scope="col">Tipo</th>
@@ -203,16 +203,16 @@ export function ProductList({
                     <th className="px-5 py-3 text-right" scope="col">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-200">
                   {products.map((product) => (
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/40" key={product.id}>
+                    <tr className="hover:bg-slate-50" key={product.id}>
                       <th className="px-5 py-4 font-normal" scope="row">
                         <div className="flex items-center gap-3">
-                          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                             <Package aria-hidden="true" size={20} />
                           </span>
                           <span className="min-w-0">
-                            <span className="flex items-center gap-2 font-bold text-slate-950 dark:text-white">
+                            <span className="flex items-center gap-2 font-bold text-slate-950">
                               <span className="truncate">{product.name}</span>
                               {product.featured ? (
                                 <Star
@@ -223,22 +223,22 @@ export function ProductList({
                                 />
                               ) : null}
                             </span>
-                            <span className="block font-mono text-xs text-slate-500 dark:text-slate-400">
-                              {product.code} · {product.slug}
+                            <span className="block font-mono text-xs text-slate-500">
+                              {product.code}, {product.slug}
                             </span>
                           </span>
                         </div>
                       </th>
-                      <td className="px-5 py-4 text-sm text-slate-700 dark:text-slate-200">
+                      <td className="px-5 py-4 text-sm text-slate-700">
                         {product.typeLabel}
                       </td>
                       <td className="px-5 py-4">
                         <ProductStatusBadge status={product.status} />
                       </td>
-                      <td className="px-5 py-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      <td className="px-5 py-4 text-sm font-semibold text-slate-800">
                         {product.priceSummary}
                       </td>
-                      <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
+                      <td className="px-5 py-4 text-sm text-slate-600">
                         {product.updatedAtLabel}
                       </td>
                       <td className="px-5 py-4">
@@ -246,7 +246,7 @@ export function ProductList({
                           {product.previewHref ? (
                             <a
                               aria-label={`Pré-visualizar ${product.name}`}
-                              className="grid size-10 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                              className="grid size-10 place-items-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                               href={product.previewHref}
                             >
                               <ArrowSquareOut aria-hidden="true" size={18} />

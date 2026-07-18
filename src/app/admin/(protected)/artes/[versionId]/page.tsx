@@ -28,7 +28,7 @@ export default async function ArtworkReviewPage({
   return (
     <div className="space-y-5">
       <Link
-        className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"
+        className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-600"
         href="/admin/artes"
       >
         <ArrowLeft aria-hidden="true" size={18} />

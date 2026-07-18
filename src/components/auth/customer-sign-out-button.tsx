@@ -29,7 +29,7 @@ export function CustomerSignOutButton() {
   return (
     <div className="flex flex-col items-end gap-1">
       <button
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
         disabled={pending}
         onClick={signOut}
         type="button"
@@ -38,7 +38,7 @@ export function CustomerSignOutButton() {
         {pending ? "Saindo" : "Sair"}
       </button>
       {error ? (
-        <span className="text-xs font-semibold text-red-700 dark:text-red-300" role="alert">
+        <span className="text-xs font-semibold text-red-700" role="alert">
           {error}
         </span>
       ) : null}

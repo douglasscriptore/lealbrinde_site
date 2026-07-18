@@ -7,18 +7,46 @@ type RevealProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
+  amount?: number;
+  variant?: "fade-up" | "fade" | "scale";
 };
 
-export function Reveal({ children, className, delay = 0 }: RevealProps) {
+const variants = {
+  "fade-up": {
+    initial: { opacity: 0, y: 18 },
+    visible: { opacity: 1, y: 0 },
+  },
+  fade: {
+    initial: { opacity: 0 },
+    visible: { opacity: 1 },
+  },
+  scale: {
+    initial: { opacity: 0, scale: 1.02 },
+    visible: { opacity: 1, scale: 1 },
+  },
+} as const;
+
+export function Reveal({
+  children,
+  className,
+  delay = 0,
+  amount = 0.2,
+  variant = "fade-up",
+}: RevealProps) {
   const shouldReduceMotion = useReducedMotion();
+  const selectedVariant = variants[variant];
 
   return (
     <motion.div
       className={className}
-      initial={shouldReduceMotion ? false : { opacity: 1, y: 12 }}
-      whileInView={shouldReduceMotion ? undefined : { y: 0 }}
-      viewport={{ once: true, amount: 0.18 }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={shouldReduceMotion ? false : selectedVariant.initial}
+      whileInView={shouldReduceMotion ? undefined : selectedVariant.visible}
+      viewport={{ once: true, amount }}
+      transition={{
+        duration: 0.56,
+        delay: Math.min(Math.max(delay, 0), 0.18),
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
       {children}
     </motion.div>

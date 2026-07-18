@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { AppMotionProvider } from "@/components/motion";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,11 +52,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <a
           href="#conteudo"
-          className="sr-only-focusable fixed left-4 top-4 z-50 rounded-full bg-accent px-5 py-3 font-semibold text-accent-foreground"
+          className="sr-only fixed left-4 top-4 z-50 rounded-full bg-accent px-5 py-3 font-semibold text-accent-foreground shadow-premium focus:not-sr-only"
         >
           Ir para o conteúdo
         </a>
-        {children}
+        <AppMotionProvider>{children}</AppMotionProvider>
       </body>
     </html>
   );

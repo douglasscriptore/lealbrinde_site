@@ -93,7 +93,7 @@ function Field({
       </label>
       {children}
       {helper ? (
-        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400" id={`${htmlFor}-help`}>
+        <p className="text-xs leading-5 text-slate-500" id={`${htmlFor}-help`}>
           {helper}
         </p>
       ) : null}
@@ -112,10 +112,10 @@ function EditorSection({
 }) {
   return (
     <section className="space-y-5">
-      <div className="border-b border-slate-200 pb-4 dark:border-slate-800">
-        <h3 className="font-bold text-slate-950 dark:text-white">{title}</h3>
+      <div className="border-b border-slate-200 pb-4">
+        <h3 className="font-bold text-slate-950">{title}</h3>
         {description ? (
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
             {description}
           </p>
         ) : null}
@@ -204,19 +204,19 @@ function BasicFields({ product }: { product: ProductEditorData }) {
           required
         />
       </Field>
-      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm dark:border-slate-800">
+      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm">
         <input
-          className="mt-0.5 size-4 accent-[#007FA8]"
+          className="mt-0.5 size-4 accent-accent"
           defaultChecked={product.featured}
           name="featured"
           type="checkbox"
           value="true"
         />
         <span>
-          <span className="block font-semibold text-slate-900 dark:text-white">
+          <span className="block font-semibold text-slate-900">
             Destacar na página principal
           </span>
-          <span className="mt-1 block leading-5 text-slate-600 dark:text-slate-300">
+          <span className="mt-1 block leading-5 text-slate-600">
             Apenas um produto DTF deve ocupar o destaque principal.
           </span>
         </span>
@@ -308,7 +308,7 @@ function PriceFields({
 
       {approvedBreak && nextBreakTier ? (
         <div
-          className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
+          className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"
           role="status"
         >
           <WarningCircle aria-hidden="true" className="mt-0.5 shrink-0" size={20} weight="fill" />
@@ -323,10 +323,10 @@ function PriceFields({
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+      <div className="overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full min-w-[700px] text-left text-sm">
           <caption className="sr-only">Faixas de preço do produto</caption>
-          <thead className="bg-slate-50 text-xs font-bold text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+          <thead className="bg-slate-50 text-xs font-bold text-slate-600">
             <tr>
               <th className="px-4 py-3" scope="col">A partir de</th>
               <th className="px-4 py-3" scope="col">Até</th>
@@ -334,7 +334,7 @@ function PriceFields({
               <th className="px-4 py-3" scope="col">Exemplo no início</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-200">
             {sortedTiers.map((tier, index) => (
               <tr key={tier.id}>
                 <td className="p-3">
@@ -371,7 +371,7 @@ function PriceFields({
                   <label className="sr-only" htmlFor={`tier-${tier.id}-price`}>
                     Valor por metro da faixa {index + 1}
                   </label>
-                  <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-[#008CB8] focus-within:ring-2 focus-within:ring-[#00AEEF]/30 dark:border-slate-700 dark:bg-slate-950">
+                  <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
                     <span className="pl-3 text-sm text-slate-500">R$</span>
                     <input
                       className="min-h-11 min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm outline-none"
@@ -385,7 +385,7 @@ function PriceFields({
                     />
                   </div>
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200">
+                <td className="px-4 py-3 font-semibold text-slate-700">
                   {tier.minimumMeters} m = {formatMoney(tier.minimumMeters * tier.unitPriceCents)}
                 </td>
               </tr>
@@ -405,13 +405,13 @@ function PriceFields({
       ) : null}
 
       <div>
-        <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+        <h4 className="text-sm font-bold text-slate-950">
           Histórico de versões
         </h4>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full min-w-[620px] text-left text-sm">
             <caption className="sr-only">Histórico das tabelas de preço</caption>
-            <thead className="bg-slate-50 text-xs font-bold text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
+            <thead className="bg-slate-50 text-xs font-bold text-slate-600">
               <tr>
                 <th className="px-4 py-3" scope="col">Versão</th>
                 <th className="px-4 py-3" scope="col">Estado</th>
@@ -420,7 +420,7 @@ function PriceFields({
                 <th className="px-4 py-3" scope="col">Faixas</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-200">
               {product.priceHistory.map((history) => (
                 <tr key={history.id}>
                   <td className="px-4 py-3 font-bold">v{history.version}</td>
@@ -461,7 +461,7 @@ function SpecificationFields({
       <div className="space-y-4">
         {product.specifications.map((specification, index) => (
           <fieldset
-            className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800 md:grid-cols-[0.8fr_1fr_2fr_auto] md:items-start"
+            className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-[0.8fr_1fr_2fr_auto] md:items-start"
             key={specification.id}
           >
             <legend className="sr-only">Especificação {index + 1}</legend>
@@ -494,7 +494,7 @@ function SpecificationFields({
             </Field>
             <label className="flex min-h-11 items-center gap-2 text-sm font-semibold md:mt-7">
               <input
-                className="size-4 accent-[#007FA8]"
+                className="size-4 accent-accent"
                 defaultChecked={specification.visible}
                 name={`specifications[${index}][visible]`}
                 type="checkbox"
@@ -504,7 +504,7 @@ function SpecificationFields({
             </label>
             <label className="flex min-h-11 items-center gap-2 text-sm font-semibold md:col-start-4">
               <input
-                className="size-4 accent-[#007FA8]"
+                className="size-4 accent-accent"
                 defaultChecked={specification.confirmed}
                 name={`specifications[${index}][confirmed]`}
                 type="checkbox"
@@ -585,9 +585,9 @@ function FileFields({ product }: { product: ProductEditorData }) {
             type="number"
           />
         </Field>
-        <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold dark:border-slate-800">
+        <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold">
           <input
-            className="mt-0.5 size-4 accent-[#007FA8]"
+            className="mt-0.5 size-4 accent-accent"
             defaultChecked={product.requiresTransparentBackground}
             name="requiresTransparentBackground"
             type="checkbox"
@@ -614,9 +614,9 @@ function FileFields({ product }: { product: ProductEditorData }) {
           required
         />
       </Field>
-      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950">
         <input
-          className="mt-0.5 size-4 accent-[#007FA8]"
+          className="mt-0.5 size-4 accent-accent"
           defaultChecked={product.filePolicyConfirmed}
           name="filePolicyConfirmed"
           type="checkbox"
@@ -646,14 +646,14 @@ function ProductionFields({
         description="A capacidade nominal é informativa e não define o prazo real do pedido."
         title="Equipamentos"
       >
-        <div className="rounded-xl bg-[#E5F8FE] p-4 text-[#005E7C] dark:bg-[#073A4A] dark:text-[#A6E8FA]">
+        <div className="rounded-xl bg-accent-soft p-4 text-accent-strong">
           <p className="text-sm font-semibold">Capacidade nominal calculada</p>
           <p className="mt-1 text-2xl font-black tracking-tight">{nominalCapacity} metros por hora</p>
         </div>
         <div className="space-y-3">
           {product.equipment.map((equipment, index) => (
             <fieldset
-              className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800 md:grid-cols-3"
+              className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-3"
               key={equipment.id}
             >
               <legend className="sr-only">Equipamento {index + 1}</legend>
@@ -730,9 +730,9 @@ function ProductionFields({
           </Field>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold dark:border-slate-800">
+          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold">
             <input
-              className="size-4 accent-[#007FA8]"
+              className="size-4 accent-accent"
               defaultChecked={product.pickupEnabled}
               name="pickupEnabled"
               type="checkbox"
@@ -740,9 +740,9 @@ function ProductionFields({
             />
             Retirada habilitada
           </label>
-          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold dark:border-slate-800">
+          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 p-4 text-sm font-semibold">
             <input
-              className="size-4 accent-[#007FA8]"
+              className="size-4 accent-accent"
               defaultChecked={product.shippingEnabled}
               name="shippingEnabled"
               type="checkbox"
@@ -762,9 +762,9 @@ function PaymentFields({ product }: { product: ProductEditorData }) {
       description="Produtos DTF aceitam somente Pix antes da revisão humana."
       title="Pagamento"
     >
-      <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[#9ADFF3] bg-[#F0FBFE] p-4 text-sm font-semibold text-[#005E7C] dark:border-[#176079] dark:bg-[#073A4A] dark:text-[#A6E8FA]">
+      <label className="flex min-h-11 items-center gap-3 rounded-xl border border-accent/40 bg-accent-soft/50 p-4 text-sm font-semibold text-accent-strong">
         <input
-          className="size-4 accent-[#007FA8]"
+          className="size-4 accent-accent"
           defaultChecked
           name="paymentMethods"
           readOnly
@@ -835,7 +835,7 @@ function MediaFields({
       <div className="space-y-3">
         {product.media.map((media, index) => (
           <fieldset
-            className="grid gap-4 rounded-xl border border-slate-200 p-4 dark:border-slate-800 md:grid-cols-[1fr_1fr_auto] md:items-end"
+            className="grid gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end"
             key={media.id}
           >
             <legend className="sr-only">Mídia {index + 1}</legend>
@@ -917,15 +917,15 @@ function SeoFields({ product }: { product: ProductEditorData }) {
           />
         </Field>
       </div>
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Prévia na busca</p>
-        <p className="mt-2 text-lg font-semibold text-[#006E91] dark:text-[#72D9F7]">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <p className="text-xs font-semibold text-slate-500">Prévia na busca</p>
+        <p className="mt-2 text-lg font-semibold text-accent-strong">
           {product.seoTitle || product.name}
         </p>
-        <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
+        <p className="mt-1 text-sm text-emerald-700">
           lealbrinde.com.br{product.slug.startsWith("/") ? product.slug : `/dtf/${product.slug}`}
         </p>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
           {product.seoDescription || product.summary}
         </p>
       </div>
@@ -952,16 +952,16 @@ function PublicationFields({
       <ul className="grid gap-3 md:grid-cols-2">
         {product.publicationChecks.map((check) => (
           <li
-            className="flex gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
+            className="flex gap-3 rounded-xl border border-slate-200 p-4"
             key={check.id}
           >
             <CheckResultIcon complete={check.complete} />
             <span>
-              <span className="block text-sm font-bold text-slate-900 dark:text-white">
+              <span className="block text-sm font-bold text-slate-900">
                 {check.label}
               </span>
               {check.description ? (
-                <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
                   {check.description}
                 </span>
               ) : null}
@@ -971,7 +971,7 @@ function PublicationFields({
       </ul>
       {missing.length ? (
         <div
-          className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"
+          className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"
           role="alert"
         >
           <WarningCircle aria-hidden="true" className="mt-0.5 shrink-0" size={20} weight="fill" />
@@ -983,7 +983,7 @@ function PublicationFields({
           </div>
         </div>
       ) : (
-        <div className="flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+        <div className="flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
           <Check aria-hidden="true" className="mt-0.5 shrink-0" size={20} weight="bold" />
           <div>
             <p className="text-sm font-bold">Produto pronto para publicação</p>
@@ -1128,18 +1128,18 @@ export function ProductEditor({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-xl font-black tracking-tight text-slate-950 dark:text-white">
+            <h2 className="truncate text-xl font-black tracking-tight text-slate-950">
               {product.name}
             </h2>
             <StatusBadge tone={statusTone[product.status]}>
               {statusLabel[product.status]}
             </StatusBadge>
           </div>
-          <p className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">
-            {product.internalCode} · {product.slug}
+          <p className="mt-1 font-mono text-xs text-slate-500">
+            {product.internalCode}, {product.slug}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -1183,8 +1183,8 @@ export function ProductEditor({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="overflow-x-auto border-b border-slate-200 dark:border-slate-800">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto border-b border-slate-200">
           <div
             aria-label="Seções do produto"
             className="flex min-w-max px-3"
@@ -1194,10 +1194,10 @@ export function ProductEditor({
               <button
                 aria-controls={`product-panel-${id}`}
                 aria-selected={activeTab === id}
-                className={`min-h-12 border-b-2 px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00AEEF] ${
+                className={`min-h-12 border-b-2 px-3.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
                   activeTab === id
-                    ? "border-[#008CB8] text-[#006E91] dark:text-[#72D9F7]"
-                    : "border-transparent text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white"
+                    ? "border-accent text-accent-strong"
+                    : "border-transparent text-slate-600 hover:text-slate-950"
                 }`}
                 id={`product-tab-${id}`}
                 key={id}
@@ -1260,7 +1260,7 @@ export function ProductEditor({
 
           {saveError ? (
             <p
-              className="mx-5 mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200 sm:mx-6"
+              className="mx-5 mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800 sm:mx-6"
               role="alert"
             >
               {saveError}
@@ -1268,20 +1268,20 @@ export function ProductEditor({
           ) : null}
           {savedMessage ? (
             <p
-              className="mx-5 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200 sm:mx-6"
+              className="mx-5 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:mx-6"
               role="status"
             >
               {savedMessage}
             </p>
           ) : null}
           {isReadOnly ? (
-            <p className="mx-5 mb-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm font-semibold text-sky-800 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200 sm:mx-6">
+            <p className="mx-5 mb-4 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm font-semibold text-sky-800 sm:mx-6">
               {readOnlyMessage}
             </p>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+          <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="text-xs leading-5 text-slate-500">
               Esta ação salva somente a seção aberta.
             </p>
             <button

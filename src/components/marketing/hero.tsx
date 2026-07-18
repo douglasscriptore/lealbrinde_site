@@ -24,29 +24,41 @@ export function MarketingHero({
   image,
 }: MarketingHeroProps) {
   return (
-    <section className="bg-[var(--background)]">
+    <section className="relative overflow-hidden bg-background">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_22%,color-mix(in_srgb,var(--accent)_9%,transparent),transparent_32%),radial-gradient(circle_at_78%_86%,color-mix(in_srgb,var(--chrome)_18%,transparent),transparent_30%)]"
+      />
       <div className="mx-auto grid min-h-[calc(100dvh-72px)] max-w-[1400px] items-center gap-8 px-4 py-10 sm:px-6 md:grid-cols-[0.86fr_1.14fr] md:py-14 lg:gap-14 lg:px-8 lg:py-16">
-        <Reveal className="relative z-10 max-w-2xl py-2 md:py-8">
-          {eyebrow ? (
-            <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-              {eyebrow}
+        <div className="relative z-10 max-w-2xl py-2 md:py-8">
+          <Reveal>
+            {eyebrow ? (
+              <p className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                {eyebrow}
+              </p>
+            ) : null}
+            <h1 className="text-balance text-[clamp(3rem,6.2vw,6.75rem)] font-black leading-[0.9] tracking-[-0.065em] text-foreground">
+              {title}
+              <span className="block text-accent">{emphasis}</span>
+            </h1>
+            <p className="mt-7 max-w-[55ch] text-base leading-relaxed text-muted sm:text-lg">
+              {summary}
             </p>
-          ) : null}
-          <h1 className="text-balance text-[clamp(3rem,7vw,7.5rem)] font-black leading-[0.88] tracking-[-0.065em] text-[var(--foreground)]">
-            {title}
-            <span className="block text-[var(--accent)]">{emphasis}</span>
-          </h1>
-          <p className="mt-7 max-w-[55ch] text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-            {summary}
-          </p>
-          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
-            <MarketingLink {...primaryAction} />
-            <MarketingLink {...secondaryAction} variant="secondary" />
-          </div>
-        </Reveal>
+          </Reveal>
+          <Reveal delay={0.08} amount={0.1}>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+              <MarketingLink {...primaryAction} />
+              <MarketingLink {...secondaryAction} variant="secondary" />
+            </div>
+          </Reveal>
+        </div>
 
-        <Reveal delay={0.08} className="relative min-h-[420px] self-stretch md:min-h-[620px]">
-          <div className="absolute inset-0 overflow-hidden rounded-2xl bg-[var(--surface-strong)]">
+        <Reveal
+          variant="scale"
+          delay={0.12}
+          className="relative min-h-[420px] self-stretch md:min-h-[620px]"
+        >
+          <div className="absolute inset-0 overflow-hidden rounded-card border border-white/80 bg-surface-strong shadow-premium">
             <Image
               src={image.src}
               alt={image.alt}
@@ -54,17 +66,13 @@ export function MarketingHero({
               preload={image.priority ?? true}
               loading="eager"
               sizes={image.sizes ?? "(max-width: 767px) 100vw, 58vw"}
-              className="object-cover"
+              className="object-cover saturate-[0.96] contrast-[1.02]"
             />
             <div
               aria-hidden="true"
               className="absolute inset-0 bg-gradient-to-t from-[color-mix(in_srgb,var(--foreground)_32%,transparent)] via-transparent to-transparent"
             />
           </div>
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-4 -left-4 h-28 w-28 rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_84%,transparent)] backdrop-blur-md sm:-left-6 sm:h-36 sm:w-36"
-          />
         </Reveal>
       </div>
     </section>

@@ -42,7 +42,7 @@ export function AdminLoginForm() {
           type="email"
           autoComplete="username"
           required
-          className="min-h-12 w-full rounded-[10px] border bg-background px-4 py-3 text-foreground"
+          className="min-h-12 w-full rounded-control border bg-background px-4 py-3 text-foreground"
         />
       </div>
       <div className="space-y-2">
@@ -56,7 +56,7 @@ export function AdminLoginForm() {
             autoComplete="current-password"
             minLength={12}
             required
-            className="min-h-12 w-full rounded-[10px] border bg-background py-3 pl-12 pr-4 text-foreground"
+            className="min-h-12 w-full rounded-control border bg-background py-3 pl-12 pr-4 text-foreground"
           />
         </div>
       </div>

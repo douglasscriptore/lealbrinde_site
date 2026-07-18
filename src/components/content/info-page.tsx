@@ -12,7 +12,7 @@ export function InfoPage({
   children?: ReactNode;
 }) {
   return (
-    <main id="conteudo" className="page-shell min-h-[65dvh] py-16 sm:py-24">
+    <main id="conteudo" className="mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-8 min-h-[65dvh] py-16 sm:py-24">
       <div className="max-w-3xl">
         {label ? <p className="font-mono text-sm font-semibold text-accent">{label}</p> : null}
         <h1 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.04em] sm:text-6xl">{title}</h1>

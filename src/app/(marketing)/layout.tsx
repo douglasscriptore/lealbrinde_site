@@ -1,5 +1,6 @@
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { shopeeStore } from "@/lib/marketplace";
 
 const logo = {
   src: "/images/leal-brinde-logo.png",
@@ -29,6 +30,7 @@ export default function MarketingLayout({ children }: Readonly<{ children: React
             title: "Serviços",
             links: [
               { label: "Brindes", href: "/brindes" },
+              { label: "Loja oficial na Shopee", href: shopeeStore.url, external: true },
               { label: "DTF por metro", href: "/dtf" },
               { label: "Como funciona", href: "/como-funciona" },
             ],

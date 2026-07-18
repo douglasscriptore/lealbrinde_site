@@ -82,10 +82,14 @@ export default function HomePage() {
         },
         development: {
           name: "Pulseiras e cordões",
-          description: "Um novo setor está sendo preparado com materiais e opções de personalização.",
+          description: "Pulseiras, fitas e cordões para eventos, equipes e credenciamento, em uma nova linha que está sendo preparada.",
           href: "/pulseiras-e-cordoes",
-          actionLabel: "Em desenvolvimento",
-          status: "Em desenvolvimento",
+          actionLabel: "Conhecer o pré-lançamento",
+          status: "Em preparação",
+          image: {
+            src: "/images/wristbands-lanyards-detail.webp",
+            alt: "Amostras editoriais de pulseiras, fitas e cordões personalizados",
+          },
         },
       }}
       dtf={{

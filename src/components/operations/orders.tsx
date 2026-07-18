@@ -86,7 +86,7 @@ export function OrderQueue({
             {title}
           </h2>
           {description ? (
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
               {description}
             </p>
           ) : null}
@@ -99,14 +99,14 @@ export function OrderQueue({
           <label className="sr-only" htmlFor="order-search">
             Buscar por código ou cliente
           </label>
-          <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-[#008CB8] focus-within:ring-2 focus-within:ring-[#00AEEF]/30 dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex items-center rounded-xl border border-slate-300 bg-white focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/30">
             <MagnifyingGlass
               aria-hidden="true"
-              className="ml-3.5 text-slate-500 dark:text-slate-400"
+              className="ml-3.5 text-slate-500"
               size={19}
             />
             <input
-              className="min-h-11 min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-slate-500 dark:placeholder:text-slate-400"
+              className="min-h-11 min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-slate-500"
               defaultValue={query}
               id="order-search"
               name="q"
@@ -114,7 +114,7 @@ export function OrderQueue({
               type="search"
             />
             <button
-              className="mr-1 min-h-9 rounded-lg px-3 text-sm font-bold text-[#006E91] hover:bg-[#E5F8FE] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] dark:text-[#72D9F7] dark:hover:bg-[#073A4A]"
+              className="mr-1 min-h-9 rounded-lg px-3 text-sm font-bold text-accent-strong hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               type="submit"
             >
               Buscar
@@ -125,7 +125,7 @@ export function OrderQueue({
         {filters.length ? (
           <nav aria-label="Filtrar pedidos" className="overflow-x-auto">
             <ul className="flex min-w-max items-center gap-2">
-              <li className="mr-1 flex items-center text-xs font-bold text-slate-500 dark:text-slate-400">
+              <li className="mr-1 flex items-center text-xs font-bold text-slate-500">
                 <FunnelSimple aria-hidden="true" className="mr-1.5" size={16} />
                 Filtros
               </li>
@@ -133,16 +133,16 @@ export function OrderQueue({
                 <li key={filter.href}>
                   <a
                     aria-current={filter.active ? "page" : undefined}
-                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00AEEF] ${
+                    className={`inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       filter.active
-                        ? "border-[#008CB8] bg-[#E5F8FE] text-[#006E91] dark:bg-[#073A4A] dark:text-[#72D9F7]"
-                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                        ? "border-accent bg-accent-soft text-accent-strong"
+                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                     href={filter.href}
                   >
                     {filter.label}
                     {typeof filter.count === "number" ? (
-                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700">
                         {filter.count}
                       </span>
                     ) : null}
@@ -171,37 +171,37 @@ export function OrderQueue({
       ) : null}
 
       {state === "ready" && orders.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <ul className="divide-y divide-slate-200">
             {orders.map((order) => (
               <li key={order.id}>
                 <a
-                  className="group grid gap-4 p-4 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#00AEEF] dark:hover:bg-slate-800/50 md:grid-cols-[8rem_minmax(0,1.3fr)_minmax(10rem,0.7fr)_auto] md:items-center md:p-5"
+                  className="group grid gap-4 p-4 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent md:grid-cols-[8rem_minmax(0,1.3fr)_minmax(10rem,0.7fr)_auto] md:items-center md:p-5"
                   href={order.detailHref}
                 >
                   <div>
-                    <span className="font-mono text-sm font-black text-slate-950 dark:text-white">
+                    <span className="font-mono text-sm font-black text-slate-950">
                       {order.code}
                     </span>
-                    <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
+                    <span className="mt-1 block text-xs text-slate-500">
                       {order.updatedAtLabel}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                    <p className="truncate text-sm font-bold text-slate-900">
                       {order.customerName}
                     </p>
-                    <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">
-                      {order.productName} · {order.quantityLabel}
+                    <p className="mt-1 truncate text-sm text-slate-600">
+                      {order.productName}, {order.quantityLabel}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 md:block">
                     <OrderStatusBadge order={order} />
-                    <p className="text-sm font-bold text-slate-900 md:mt-2 dark:text-white">
+                    <p className="text-sm font-bold text-slate-900 md:mt-2">
                       {order.totalLabel}
                     </p>
                   </div>
-                  <span className="flex min-h-10 items-center justify-between gap-2 text-sm font-bold text-[#006E91] dark:text-[#72D9F7] md:justify-end">
+                  <span className="flex min-h-10 items-center justify-between gap-2 text-sm font-bold text-accent-strong md:justify-end">
                     {order.actionLabel ?? "Ver pedido"}
                     <ArrowRight
                       aria-hidden="true"
@@ -226,22 +226,22 @@ const timelineAppearance: Record<
   complete: {
     icon: Check,
     iconClass: "bg-emerald-600 text-white",
-    lineClass: "bg-emerald-300 dark:bg-emerald-800",
+    lineClass: "bg-emerald-300",
   },
   current: {
     icon: Clock,
-    iconClass: "bg-[#007FA8] text-white",
-    lineClass: "bg-slate-200 dark:bg-slate-700",
+    iconClass: "bg-accent text-white",
+    lineClass: "bg-slate-200",
   },
   pending: {
     icon: Clock,
-    iconClass: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
-    lineClass: "bg-slate-200 dark:bg-slate-700",
+    iconClass: "bg-slate-100 text-slate-500",
+    lineClass: "bg-slate-200",
   },
   issue: {
     icon: WarningCircle,
-    iconClass: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-    lineClass: "bg-slate-200 dark:bg-slate-700",
+    iconClass: "bg-amber-100 text-amber-700",
+    lineClass: "bg-slate-200",
   },
 };
 
@@ -282,17 +282,17 @@ export function OrderTimeline({
               </span>
               <div className="pt-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900">
                     {event.title}
                   </h3>
                   {event.occurredAtLabel ? (
-                    <time className="text-xs text-slate-500 dark:text-slate-400">
+                    <time className="text-xs text-slate-500">
                       {event.occurredAtLabel}
                     </time>
                   ) : null}
                 </div>
                 {event.description ? (
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
                     {event.description}
                   </p>
                 ) : null}
@@ -339,16 +339,16 @@ export function ArtworkReviewPanel({
 }: ArtworkReviewPanelProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(22rem,0.8fr)]">
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="font-mono text-sm font-black text-[#006E91] dark:text-[#72D9F7]">
+              <p className="font-mono text-sm font-black text-accent-strong">
                 {review.orderCode}
               </p>
               <h2 className="mt-1 text-xl font-black tracking-tight">Revisão da arte</h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                {review.customerName} · {review.productName} · {review.quantityLabel}
+              <p className="mt-1 text-sm text-slate-600">
+                {review.customerName}, {review.productName}, {review.quantityLabel}
               </p>
             </div>
             <StatusBadge tone="info">{review.versionLabel}</StatusBadge>
@@ -356,16 +356,16 @@ export function ArtworkReviewPanel({
         </div>
 
         <div className="p-5">
-          <div className="flex flex-col gap-4 rounded-xl bg-slate-50 p-4 dark:bg-slate-950 sm:flex-row sm:items-center">
-            <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+          <div className="flex flex-col gap-4 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center">
+            <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white text-slate-600 shadow-sm">
               <FileImage aria-hidden="true" size={24} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
+              <p className="truncate text-sm font-bold text-slate-900">
                 {review.fileName}
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {review.fileSizeLabel} · enviado {review.submittedAtLabel}
+              <p className="mt-1 text-xs text-slate-500">
+                {review.fileSizeLabel}, enviado {review.submittedAtLabel}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -390,7 +390,7 @@ export function ArtworkReviewPanel({
                 const Icon = presentation.icon;
                 return (
                   <li
-                    className="flex gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
+                    className="flex gap-3 rounded-xl border border-slate-200 p-4"
                     key={check.id}
                   >
                     <Icon
@@ -411,7 +411,7 @@ export function ArtworkReviewPanel({
                         <StatusBadge tone={presentation.tone}>{presentation.label}</StatusBadge>
                       </div>
                       {check.detail ? (
-                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
                           {check.detail}
                         </p>
                       ) : null}
@@ -424,9 +424,9 @@ export function ArtworkReviewPanel({
         </div>
       </section>
 
-      <section className="h-fit rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <section className="h-fit rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-lg font-black tracking-tight">Decisão da revisão</h2>
-        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p className="mt-1 text-sm leading-6 text-slate-600">
           A aprovação humana libera a arte. A produção só começa quando o Pix também estiver confirmado.
         </p>
 
@@ -456,7 +456,7 @@ export function ArtworkReviewPanel({
               name="comment"
               placeholder="Explique objetivamente o que precisa ser alterado."
             />
-            <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+            <p className="text-xs leading-5 text-slate-500">
               Obrigatória ao solicitar correção. Não inclua observações internas.
             </p>
           </div>
@@ -475,7 +475,7 @@ export function ArtworkReviewPanel({
 
           {errorMessage ? (
             <p
-              className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"
+              className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800"
               role="alert"
             >
               {errorMessage}
@@ -483,14 +483,14 @@ export function ArtworkReviewPanel({
           ) : null}
           {successMessage ? (
             <p
-              className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+              className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"
               role="status"
             >
               {successMessage}
             </p>
           ) : null}
           {reviewLockedMessage ? (
-            <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+            <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-semibold text-slate-700">
               {reviewLockedMessage}
             </p>
           ) : null}
