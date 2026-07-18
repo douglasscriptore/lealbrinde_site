@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Leal Brinde">
+  <rect width="64" height="64" rx="15" fill="#0797a6"/>
+  <path d="M17 14h9v27h19v9H17V14Z" fill="#f7faf9"/>
+  <path d="M34 14h13v9H34z" fill="#f7faf9" opacity=".72"/>
+</svg>

@@ -1,0 +1,46 @@
+{
+  "name": "site-lealbrinde",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24.18 <25"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:backup": "tsx scripts/backup.ts"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "better-auth": "^1.6.23",
+    "better-sqlite3": "^12.11.1",
+    "motion": "^12.42.2",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "server-only": "^0.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@next/env": "16.2.10",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "auth": "1.6.23",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "packageManager": "pnpm@10.28.2"
+}
