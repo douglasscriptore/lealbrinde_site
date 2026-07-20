@@ -32,6 +32,95 @@ export interface PaymentGateway {
   verifyWebhook(request: Request): Promise<{ externalId: string; status: PixPaymentStatus }>;
 }
 
+export type CommercePaymentInput = {
+  merchantOrderId: string;
+  idempotencyKey: string;
+  items: Array<{ referenceId: string; title: string; quantity: number; unitPriceCents: number }>;
+  shippingCents: number;
+  totalCents: number;
+  method: "PIX" | "CREDIT_CARD";
+  customer: { name: string; email: string; document: string };
+  cardToken?: string;
+  cardPaymentMethodId?: string;
+  installments?: number;
+};
+
+export type CommercePaymentResult = {
+  externalId: string;
+  status: "PENDING" | "PAID" | "FAILED";
+  provider: string;
+  expiresAt: string | null;
+  pix: { copyPasteCode: string; qrCodeBase64: string | null } | null;
+  metadata: Record<string, unknown>;
+};
+
+export interface CommercePaymentGateway {
+  createPayment(input: CommercePaymentInput): Promise<CommercePaymentResult>;
+  installmentOptions(amountCents: number): Promise<Array<{ installments: number; installmentCents: number; totalCents: number }>>;
+  updateSettings(input: { maxInstallments: number; statementDescriptor: string; cardEnabled: boolean }): Promise<void>;
+}
+
+class MockCommercePaymentGateway implements CommercePaymentGateway {
+  async createPayment(input: CommercePaymentInput): Promise<CommercePaymentResult> {
+    const externalId = `commerce_mock_${createHash("sha256").update(input.idempotencyKey).digest("hex").slice(0, 24)}`;
+    return {
+      externalId,
+      status: input.method === "CREDIT_CARD" ? "PAID" : "PENDING",
+      provider: "mock",
+      expiresAt: input.method === "PIX" ? new Date(Date.now() + 30 * 60 * 1000).toISOString() : null,
+      pix: input.method === "PIX" ? { copyPasteCode: `LEALBRINDE-DEMO-${externalId}`, qrCodeBase64: null } : null,
+      metadata: { sandbox: true, method: input.method, installments: input.installments ?? 1 },
+    };
+  }
+  async installmentOptions(amountCents: number) {
+    return Array.from({ length: 3 }, (_, index) => ({ installments: index + 1, installmentCents: Math.ceil(amountCents / (index + 1)), totalCents: amountCents }));
+  }
+  async updateSettings() {}
+}
+
+class PaymentApiCommerceGateway implements CommercePaymentGateway {
+  constructor(private readonly baseUrl: string, private readonly apiKey: string) {}
+  private async request(path: string, init?: RequestInit) {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      ...init,
+      headers: { accept: "application/json", "content-type": "application/json", "x-api-key": this.apiKey, ...init?.headers },
+      signal: AbortSignal.timeout(15_000),
+    });
+    const payload = await response.json().catch(() => ({})) as Record<string, unknown>;
+    if (!response.ok) {
+      const detail = [payload.message, payload.description, payload.detail, payload.status_detail].find((value) => typeof value === "string");
+      throw new Error(typeof detail === "string" ? detail : "O provedor recusou a operação de pagamento.");
+    }
+    return payload;
+  }
+  async createPayment(input: CommercePaymentInput): Promise<CommercePaymentResult> {
+    const payload = await this.request("/v2/payments", { method: "POST", body: JSON.stringify({ merchantId: "lealbrinde", ...input }) });
+    return {
+      externalId: String(payload.id ?? payload.externalId),
+      status: String(payload.status) as CommercePaymentResult["status"],
+      provider: "mercado-pago",
+      expiresAt: payload.expiresAt ? String(payload.expiresAt) : null,
+      pix: payload.pix && typeof payload.pix === "object" ? payload.pix as CommercePaymentResult["pix"] : null,
+      metadata: { paymentApi: true },
+    };
+  }
+  async installmentOptions(amountCents: number) {
+    const payload = await this.request(`/payments/installment-options?hubId=lealbrinde&amount=${(amountCents / 100).toFixed(2)}`);
+    return (Array.isArray(payload.options) ? payload.options : []) as Array<{ installments: number; installmentCents: number; totalCents: number }>;
+  }
+  async updateSettings(input: { maxInstallments: number; statementDescriptor: string; cardEnabled: boolean }) {
+    await this.request("/admin/hubs/lealbrinde/payment-settings", { method: "PUT", body: JSON.stringify({ ...input, serviceFee: 0 }) });
+  }
+}
+
+export function getCommercePaymentGateway(): CommercePaymentGateway {
+  const baseUrl = process.env.PAYMENT_API_URL;
+  const apiKey = process.env.PAYMENT_API_KEY;
+  if (baseUrl && apiKey) return new PaymentApiCommerceGateway(baseUrl.replace(/\/$/, ""), apiKey);
+  if (process.env.NODE_ENV === "production") throw new Error("Configure PAYMENT_API_URL e PAYMENT_API_KEY.");
+  return new MockCommercePaymentGateway();
+}
+
 class MockPaymentGateway implements PaymentGateway {
   async createPix(input: {
     externalReference: string;

@@ -9,12 +9,13 @@ import {
   type Order,
   type OrderCustomerData,
   type OrderEvent,
+  type OrderItem,
   type PaymentStatus,
   type PriceSnapshot,
   type ProductionStatus,
 } from "@/domain";
 
-import { mapOrder, mapOrderCustomerData, mapOrderEvent } from "./mappers";
+import { mapOrder, mapOrderCustomerData, mapOrderEvent, mapOrderItem } from "./mappers";
 import { ProductRepository } from "./product-repository";
 import { asRow, asRows, domainId, nowIso, writeAudit } from "./repository-helpers";
 
@@ -122,9 +123,10 @@ export class OrderRepository {
             quantity_meters, price_snapshot_json, payment_status,
             artwork_status, production_status, fulfillment_status,
             fulfillment_method, production_ready_at, manual_lead_time_note,
-            created_at, updated_at
+            created_at, updated_at, payment_method, subtotal_cents,
+            shipping_cents, total_cents
           ) VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', 'UPLOADING', 'BLOCKED',
-                    'PENDING', ?, NULL, NULL, ?, ?)`,
+                    'PENDING', ?, NULL, NULL, ?, ?, 'PIX', ?, 0, ?)`,
         )
         .run(
           id,
@@ -137,7 +139,32 @@ export class OrderRepository {
           input.fulfillmentMethod,
           timestamp,
           timestamp,
+          priceSnapshot.subtotalCents,
+          priceSnapshot.subtotalCents,
         );
+      this.db.prepare(
+        `INSERT INTO order_items (
+          id, order_id, product_id, variant_id, product_type, product_name,
+          sku, quantity, unit, unit_price_cents, total_cents,
+          price_snapshot_json, customization_snapshot_json, shipping_snapshot_json,
+          artwork_status, production_status, production_ready_at,
+          manual_lead_time_note, created_at, updated_at
+        ) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, 'METER', ?, ?, ?, '{}', '{}',
+                  'UPLOADING', 'BLOCKED', NULL, NULL, ?, ?)`,
+      ).run(
+        domainId("order_item"),
+        id,
+        product.id,
+        product.type,
+        product.name,
+        product.code,
+        input.quantityMeters,
+        priceSnapshot.unitPriceCents,
+        priceSnapshot.subtotalCents,
+        JSON.stringify(priceSnapshot),
+        timestamp,
+        timestamp,
+      );
       this.insertEvent({
         orderId: id,
         type: "ORDER_CREATED",
@@ -266,6 +293,121 @@ export class OrderRepository {
         )
         .all(orderId),
     ).map(mapOrderEvent);
+  }
+
+  items(orderId: string): OrderItem[] {
+    return asRows(
+      this.db.prepare(
+        "SELECT * FROM order_items WHERE order_id = ? ORDER BY created_at, id",
+      ).all(orderId),
+    ).map(mapOrderItem);
+  }
+
+  approveStructuredPersonalizations(orderId: string, actorId: string): Order {
+    const order = this.requireOrder(orderId);
+    if (order.paymentStatus !== "PAID") {
+      throw new Error("A personalização só pode ser aprovada depois do pagamento.");
+    }
+
+    const timestamp = nowIso();
+    this.db.transaction(() => {
+      const result = this.db.prepare(
+        `UPDATE order_items
+         SET artwork_status = 'APPROVED', production_status = 'QUEUED',
+             production_ready_at = COALESCE(production_ready_at, ?), updated_at = ?
+         WHERE order_id = ? AND artwork_status = 'PENDING_REVIEW'
+           AND EXISTS (
+             SELECT 1 FROM standard_product_configurations configuration
+             WHERE configuration.product_id = order_items.product_id
+               AND configuration.personalization_mode = 'STRUCTURED_FIELDS'
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM artwork_versions
+             WHERE artwork_versions.order_item_id = order_items.id
+           )`,
+      ).run(timestamp, timestamp, orderId);
+      if (result.changes === 0) {
+        throw new Error("Não há personalização estruturada aguardando aprovação.");
+      }
+
+      const remainingBlocked = this.db.prepare(
+        "SELECT 1 FROM order_items WHERE order_id = ? AND production_status = 'BLOCKED' LIMIT 1",
+      ).get(orderId);
+      const remainingArtwork = this.db.prepare(
+        `SELECT 1 FROM order_items
+         WHERE order_id = ? AND artwork_status NOT IN ('APPROVED', 'NOT_REQUIRED')
+         LIMIT 1`,
+      ).get(orderId);
+      this.updateStatuses(
+        orderId,
+        {
+          artworkStatus: remainingArtwork ? "PENDING_REVIEW" : "APPROVED",
+          productionStatus: remainingBlocked ? "BLOCKED" : "QUEUED",
+        },
+        actorId,
+      );
+      writeAudit(this.db, {
+        actorId,
+        action: "STRUCTURED_PERSONALIZATION_APPROVED",
+        entityType: "Order",
+        entityId: orderId,
+        after: { approvedItems: result.changes },
+      });
+    })();
+
+    return this.requireOrder(orderId);
+  }
+
+  transitionItemProduction(
+    orderId: string,
+    from: OrderItem["productionStatus"],
+    to: OrderItem["productionStatus"],
+    actorId: string,
+  ): number {
+    const timestamp = nowIso();
+    const result = this.db.prepare(
+      `UPDATE order_items
+       SET production_status = ?,
+           production_ready_at = CASE
+             WHEN production_status = 'BLOCKED' THEN COALESCE(production_ready_at, ?)
+             ELSE production_ready_at
+           END,
+           updated_at = ?
+       WHERE order_id = ? AND production_status = ?`,
+    ).run(to, timestamp, timestamp, orderId, from);
+    if (result.changes === 0) {
+      throw new Error("Nenhum item está disponível para esta etapa de produção.");
+    }
+    writeAudit(this.db, {
+      actorId,
+      action: "ORDER_ITEMS_PRODUCTION_CHANGED",
+      entityType: "Order",
+      entityId: orderId,
+      before: { productionStatus: from },
+      after: { productionStatus: to, itemCount: result.changes },
+    });
+    return result.changes;
+  }
+
+  releaseApprovedItems(orderId: string, actorId: string): number {
+    const timestamp = nowIso();
+    const result = this.db.prepare(
+      `UPDATE order_items
+       SET production_status = 'QUEUED',
+           production_ready_at = COALESCE(production_ready_at, ?), updated_at = ?
+       WHERE order_id = ? AND production_status = 'BLOCKED'
+         AND artwork_status IN ('APPROVED', 'NOT_REQUIRED')`,
+    ).run(timestamp, timestamp, orderId);
+    if (result.changes > 0) {
+      writeAudit(this.db, {
+        actorId,
+        action: "ORDER_ITEMS_RELEASED_TO_PRODUCTION",
+        entityType: "Order",
+        entityId: orderId,
+        after: { itemCount: result.changes },
+      });
+    }
+    return result.changes;
   }
 
   saveCustomerData(

@@ -8,6 +8,7 @@ import { FaqSection } from "./faq-section";
 import { MarketingLink } from "./marketing-link";
 import { PriceTable } from "./price-table";
 import { ProductSpecifications } from "./product-specifications";
+import { ProductionVideoSection } from "./production-video-section";
 import { Reveal } from "./reveal";
 import type {
   EquipmentCapacity,
@@ -150,6 +151,8 @@ export function DtfProductPage({
           </div>
         </div>
       </section>
+
+      <ProductionVideoSection />
 
       <ProductSpecifications
         title={specifications.title}

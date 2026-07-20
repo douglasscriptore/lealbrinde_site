@@ -14,17 +14,34 @@ import { auth } from "@/server/auth/auth";
 import { requireStaff } from "@/server/auth/session";
 import {
   ArtworkVersionRepository,
+  CommerceRepository,
   isArtworkReadyForHumanReview,
   openDatabase,
   OrderRepository,
   ProductRepository,
   PaymentAttemptRepository,
 } from "@/server/db";
-import { getPaymentGateway } from "@/server/integrations/payment-gateway";
+import { getCommercePaymentGateway, getPaymentGateway } from "@/server/integrations/payment-gateway";
 
 function requiredText(data: FormData, key: string): string {
   const value = String(data.get(key) ?? "").trim();
   if (!value) throw new Error(`O campo ${key} é obrigatório.`);
+  return value;
+}
+
+function requiredMoneyCents(data: FormData, key: string): number {
+  const raw = requiredText(data, key);
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`Informe um valor válido em ${key}.`);
+  return Math.round(value * 100);
+}
+
+function optionalNonNegativeNumber(data: FormData, key: string): number {
+  const raw = String(data.get(key) ?? "").trim();
+  if (!raw) return 0;
+  const value = Number(raw.replace(",", "."));
+  if (!Number.isFinite(value) || value < 0) throw new Error(`Informe um valor válido em ${key}.`);
   return value;
 }
 
@@ -454,6 +471,417 @@ export async function createDtfProductFromTemplateAction(data: FormData) {
   );
 }
 
+export async function createStandardProductAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const code = requiredText(data, "code").toUpperCase();
+  const slugPart = requiredText(data, "slug");
+  const destination = "/admin/produtos/novo?tipo=padrao";
+  let createdId: string | null = null;
+  let failure: string | null = null;
+
+  try {
+    if (!/^[A-Z0-9][A-Z0-9_-]{2,63}$/.test(code)) throw new Error("Use um código de 3 a 64 letras, números, hífen ou sublinhado.");
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slugPart)) throw new Error("Use uma URL curta com letras minúsculas, números e hífens.");
+    const options = indexedFormEntries(data, "options", "name").map((index) => ({
+      name: String(data.get(`options[${index}][name]`) ?? "").trim(),
+      values: String(data.get(`options[${index}][values]`) ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+    })).filter((option) => option.name && option.values.length > 0);
+    const variants = indexedFormEntries(data, "variants", "sku").map((index) => {
+      let optionValues: Record<string, string>;
+      try {
+        optionValues = JSON.parse(requiredText(data, `variants[${index}][options]`)) as Record<string, string>;
+      } catch {
+        throw new Error("A combinação de uma variante é inválida.");
+      }
+      const stockMode = requiredText(data, `variants[${index}][stockMode]`);
+      if (stockMode !== "TRACKED" && stockMode !== "MADE_TO_ORDER") throw new Error("Modo de estoque inválido.");
+      return {
+        sku: requiredText(data, `variants[${index}][sku]`).toUpperCase(),
+        optionValues,
+        basePriceCents: requiredMoneyCents(data, `variants[${index}][price]`),
+        minimumQuantity: requiredPositiveInteger(data, "minimumQuantity"),
+        quantityIncrement: requiredPositiveInteger(data, "quantityIncrement"),
+        stockMode: stockMode as "TRACKED" | "MADE_TO_ORDER",
+        availableQuantity: stockMode === "TRACKED" ? Number(data.get(`variants[${index}][stock]`) ?? 0) : null,
+        weightGrams: Math.round(optionalNonNegativeNumber(data, `variants[${index}][weight]`)),
+        widthCm: optionalNonNegativeNumber(data, `variants[${index}][width]`),
+        heightCm: optionalNonNegativeNumber(data, `variants[${index}][height]`),
+        lengthCm: optionalNonNegativeNumber(data, `variants[${index}][length]`),
+        active: true,
+      };
+    });
+    const personalizationMode = requiredText(data, "personalizationMode");
+    if (!["NONE", "STRUCTURED_FIELDS", "ARTWORK_UPLOAD"].includes(personalizationMode)) throw new Error("Modo de personalização inválido.");
+    const personalizationFields = indexedFormEntries(data, "fields", "key").map((index, position) => {
+      const type = requiredText(data, `fields[${index}][type]`);
+      if (!["TEXT", "LONG_TEXT", "SELECT", "NUMBER", "COLOR", "NOTE"].includes(type)) throw new Error("Tipo de campo de personalização inválido.");
+      const price = String(data.get(`fields[${index}][price]`) ?? "0").trim();
+      return {
+        key: requiredText(data, `fields[${index}][key]`),
+        label: requiredText(data, `fields[${index}][label]`),
+        type: type as "TEXT" | "LONG_TEXT" | "SELECT" | "NUMBER" | "COLOR" | "NOTE",
+        required: data.get(`fields[${index}][required]`) === "true",
+        options: String(data.get(`fields[${index}][options]`) ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+        maximumLength: type === "TEXT" || type === "LONG_TEXT" ? 240 : null,
+        priceAdjustmentCents: price ? Math.round(Number(price.replace(",", ".")) * 100) : 0,
+        position,
+      };
+    });
+    const fulfillmentOptions: Array<"PICKUP" | "SHIPPING"> = [];
+    if (data.get("pickupEnabled") === "true") fulfillmentOptions.push("PICKUP");
+    if (data.get("shippingEnabled") === "true") fulfillmentOptions.push("SHIPPING");
+    if (!fulfillmentOptions.length) throw new Error("Selecione retirada ou entrega.");
+    const mainImageUrl = String(data.get("mainImageUrl") ?? "").trim() || null;
+    if (mainImageUrl && !mainImageUrl.startsWith("/images/") && !mainImageUrl.startsWith("https://")) throw new Error("A imagem deve usar /images/ ou uma URL HTTPS.");
+    const mainImageAlt = String(data.get("mainImageAlt") ?? "").trim();
+    if (mainImageUrl && !mainImageAlt) throw new Error("Informe o texto alternativo da imagem principal.");
+    const categoryId = requiredText(data, "categoryId");
+    const db = openDatabase();
+    try {
+      const commerce = new CommerceRepository(db);
+      const aggregate = commerce.createStandardProduct({
+        product: {
+          code,
+          name: requiredText(data, "name"),
+          slug: `/produtos/${slugPart}`,
+          summary: requiredText(data, "summary"),
+          description: requiredText(data, "description"),
+          featured: false,
+          displayOrder: 20,
+          paymentMethods: ["PIX", "CREDIT_CARD"],
+          fulfillmentOptions,
+          mainImageUrl,
+          gallery: mainImageUrl ? [{ id: `media_${randomUUID()}`, url: mainImageUrl, alt: mainImageAlt, position: 0 }] : [],
+          seo: {
+            title: requiredText(data, "seoTitle"),
+            description: requiredText(data, "seoDescription"),
+            canonicalPath: `/produtos/${slugPart}`,
+            socialImageUrl: mainImageUrl,
+          },
+        },
+        configuration: {
+          minimumQuantity: requiredPositiveInteger(data, "minimumQuantity"),
+          quantityIncrement: requiredPositiveInteger(data, "quantityIncrement"),
+          personalizationMode: personalizationMode as "NONE" | "STRUCTURED_FIELDS" | "ARTWORK_UPLOAD",
+          reviewRequired: data.get("reviewRequired") === "true",
+          leadTimeBusinessDays: requiredPositiveInteger(data, "leadTimeBusinessDays", 0),
+          fulfillmentOptions,
+        },
+        categoryIds: [categoryId],
+        primaryCategoryId: categoryId,
+        options,
+        variants,
+        personalizationFields,
+      }, session.user.id);
+      createdId = aggregate.product.id;
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    failure = errorMessage(error);
+  }
+
+  if (failure || !createdId) redirect(`${destination}&erro=${encodeURIComponent(failure ?? "Não foi possível criar o produto.")}`);
+  revalidatePath("/admin/produtos");
+  revalidatePath("/produtos");
+  redirect(`/admin/produtos/${createdId}?sucesso=${encodeURIComponent("Produto padrão criado como rascunho.")}`);
+}
+
+export async function updateStandardProductAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const productId = requiredText(data, "productId");
+  const slugPart = requiredText(data, "slug");
+  let failure: string | null = null;
+  let previousSlug: string | null = null;
+
+  try {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slugPart)) {
+      throw new Error("Use uma URL curta com letras minúsculas, números e hífens.");
+    }
+    const options = indexedFormEntries(data, "options", "name").map((index) => ({
+      name: String(data.get(`options[${index}][name]`) ?? "").trim(),
+      values: String(data.get(`options[${index}][values]`) ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+    })).filter((option) => option.name && option.values.length > 0);
+    const variants = indexedFormEntries(data, "variants", "sku").map((index) => {
+      let optionValues: Record<string, string>;
+      try {
+        optionValues = JSON.parse(requiredText(data, `variants[${index}][options]`)) as Record<string, string>;
+      } catch {
+        throw new Error("A combinação de uma variante é inválida.");
+      }
+      const stockMode = requiredText(data, `variants[${index}][stockMode]`);
+      if (stockMode !== "TRACKED" && stockMode !== "MADE_TO_ORDER") throw new Error("Modo de estoque inválido.");
+      const id = String(data.get(`variants[${index}][id]`) ?? "").trim() || undefined;
+      return {
+        id,
+        sku: requiredText(data, `variants[${index}][sku]`).toUpperCase(),
+        optionValues,
+        basePriceCents: id ? undefined : requiredMoneyCents(data, `variants[${index}][price]`),
+        minimumQuantity: requiredPositiveInteger(data, `variants[${index}][minimumQuantity]`),
+        quantityIncrement: requiredPositiveInteger(data, `variants[${index}][quantityIncrement]`),
+        stockMode: stockMode as "TRACKED" | "MADE_TO_ORDER",
+        availableQuantity: stockMode === "TRACKED"
+          ? Number(data.get(`variants[${index}][stock]`) ?? 0)
+          : null,
+        weightGrams: Math.round(optionalNonNegativeNumber(data, `variants[${index}][weight]`)),
+        widthCm: optionalNonNegativeNumber(data, `variants[${index}][width]`),
+        heightCm: optionalNonNegativeNumber(data, `variants[${index}][height]`),
+        lengthCm: optionalNonNegativeNumber(data, `variants[${index}][length]`),
+        active: data.get(`variants[${index}][active]`) === "true",
+      };
+    });
+    const personalizationMode = requiredText(data, "personalizationMode");
+    if (!["NONE", "STRUCTURED_FIELDS", "ARTWORK_UPLOAD"].includes(personalizationMode)) {
+      throw new Error("Modo de personalização inválido.");
+    }
+    const personalizationFields = indexedFormEntries(data, "fields", "key").map((index, position) => {
+      const type = requiredText(data, `fields[${index}][type]`);
+      if (!["TEXT", "LONG_TEXT", "SELECT", "NUMBER", "COLOR", "NOTE"].includes(type)) {
+        throw new Error("Tipo de campo de personalização inválido.");
+      }
+      const price = String(data.get(`fields[${index}][price]`) ?? "0").trim();
+      const maximumLength = String(data.get(`fields[${index}][maximumLength]`) ?? "").trim();
+      return {
+        key: requiredText(data, `fields[${index}][key]`),
+        label: requiredText(data, `fields[${index}][label]`),
+        type: type as "TEXT" | "LONG_TEXT" | "SELECT" | "NUMBER" | "COLOR" | "NOTE",
+        required: data.get(`fields[${index}][required]`) === "true",
+        options: String(data.get(`fields[${index}][options]`) ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+        maximumLength: maximumLength ? requiredPositiveInteger(data, `fields[${index}][maximumLength]`) : null,
+        priceAdjustmentCents: price ? Math.round(Number(price.replace(",", ".")) * 100) : 0,
+        position,
+      };
+    });
+    if (personalizationFields.some((field) => !Number.isInteger(field.priceAdjustmentCents) || field.priceAdjustmentCents < 0)) {
+      throw new Error("O acréscimo da personalização precisa ser um valor válido.");
+    }
+    const fulfillmentOptions: Array<"PICKUP" | "SHIPPING"> = [];
+    if (data.get("pickupEnabled") === "true") fulfillmentOptions.push("PICKUP");
+    if (data.get("shippingEnabled") === "true") fulfillmentOptions.push("SHIPPING");
+    const mainImageUrl = String(data.get("mainImageUrl") ?? "").trim() || null;
+    if (mainImageUrl && !mainImageUrl.startsWith("/images/") && !mainImageUrl.startsWith("https://")) {
+      throw new Error("A imagem deve usar /images/ ou uma URL HTTPS.");
+    }
+    const gallery = indexedFormEntries(data, "gallery", "url").map((index, position) => ({
+      id: String(data.get(`gallery[${index}][id]`) ?? "").trim() || `media_${randomUUID()}`,
+      url: requiredText(data, `gallery[${index}][url]`),
+      alt: requiredText(data, `gallery[${index}][alt]`),
+      position,
+    }));
+    const mainImageAlt = String(data.get("mainImageAlt") ?? "").trim();
+    if (mainImageUrl && !mainImageAlt) {
+      throw new Error("Informe o texto alternativo da imagem principal.");
+    }
+    if (mainImageUrl) {
+      const mainInGallery = gallery.find((media) => media.url === mainImageUrl);
+      if (mainInGallery) mainInGallery.alt = mainImageAlt;
+      else gallery.unshift({ id: `media_${randomUUID()}`, url: mainImageUrl, alt: mainImageAlt, position: 0 });
+    }
+    const normalizedGallery = gallery.map((media, position) => ({ ...media, position }));
+    const categoryId = requiredText(data, "categoryId");
+    const db = openDatabase();
+    try {
+      const commerce = new CommerceRepository(db);
+      const current = commerce.getStandardProduct(productId);
+      if (!current) throw new Error("Produto padrão não encontrado.");
+      previousSlug = current.product.slug;
+      commerce.updateStandardProduct(productId, {
+        product: {
+          name: requiredText(data, "name"),
+          slug: `/produtos/${slugPart}`,
+          summary: requiredText(data, "summary"),
+          description: requiredText(data, "description"),
+          featured: data.get("featured") === "true",
+          displayOrder: Number(data.get("displayOrder") ?? 20),
+          fulfillmentOptions,
+          mainImageUrl,
+          gallery: normalizedGallery,
+          seo: {
+            title: requiredText(data, "seoTitle"),
+            description: requiredText(data, "seoDescription"),
+            canonicalPath: `/produtos/${slugPart}`,
+            socialImageUrl: String(data.get("socialImageUrl") ?? "").trim() || mainImageUrl,
+          },
+        },
+        configuration: {
+          minimumQuantity: requiredPositiveInteger(data, "minimumQuantity"),
+          quantityIncrement: requiredPositiveInteger(data, "quantityIncrement"),
+          personalizationMode: personalizationMode as "NONE" | "STRUCTURED_FIELDS" | "ARTWORK_UPLOAD",
+          reviewRequired: data.get("reviewRequired") === "true",
+          leadTimeBusinessDays: requiredPositiveInteger(data, "leadTimeBusinessDays", 0),
+          fulfillmentOptions,
+        },
+        categoryIds: [categoryId],
+        primaryCategoryId: categoryId,
+        options,
+        variants,
+        personalizationFields,
+      }, session.user.id);
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    failure = errorMessage(error);
+  }
+
+  if (failure) redirect(`/admin/produtos/${productId}?erro=${encodeURIComponent(failure)}`);
+  revalidatePath(`/admin/produtos/${productId}`);
+  revalidatePath("/admin/produtos");
+  revalidatePath("/produtos");
+  if (previousSlug) revalidatePath(previousSlug);
+  revalidatePath(`/produtos/${slugPart}`);
+  redirect(`/admin/produtos/${productId}?sucesso=${encodeURIComponent("Cadastro comercial atualizado.")}`);
+}
+
+export async function publishStandardProductAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const productId = requiredText(data, "productId");
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    new CommerceRepository(db).publishStandardProduct(productId, session.user.id);
+  } catch (error) {
+    failure = errorMessage(error);
+  } finally {
+    db.close();
+  }
+  if (failure) redirect(`/admin/produtos/${productId}?erro=${encodeURIComponent(failure)}`);
+  revalidatePath("/produtos");
+  revalidatePath("/admin/produtos");
+  redirect(`/admin/produtos/${productId}?sucesso=${encodeURIComponent("Produto publicado no catálogo.")}`);
+}
+
+export async function archiveStandardProductAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const productId = requiredText(data, "productId");
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    new ProductRepository(db).archiveProduct(productId, session.user.id);
+  } catch (error) {
+    failure = errorMessage(error);
+  } finally {
+    db.close();
+  }
+  if (failure) redirect(`/admin/produtos/${productId}?erro=${encodeURIComponent(failure)}`);
+  revalidatePath("/produtos");
+  revalidatePath("/admin/produtos");
+  redirect(`/admin/produtos/${productId}?sucesso=${encodeURIComponent("Produto arquivado e removido de novas compras.")}`);
+}
+
+export async function adjustVariantInventoryAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const productId = requiredText(data, "productId");
+  const variantId = requiredText(data, "variantId");
+  const delta = Number(requiredText(data, "delta"));
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    new CommerceRepository(db).adjustInventory(variantId, delta, requiredText(data, "reason"), session.user.id);
+  } catch (error) {
+    failure = errorMessage(error);
+  } finally { db.close(); }
+  if (failure) redirect(`/admin/produtos/${productId}?erro=${encodeURIComponent(failure)}`);
+  revalidatePath(`/admin/produtos/${productId}`);
+  revalidatePath("/produtos");
+  redirect(`/admin/produtos/${productId}?sucesso=${encodeURIComponent("Estoque atualizado.")}`);
+}
+
+export async function createVariantPriceVersionAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const productId = requiredText(data, "productId");
+  const variantId = requiredText(data, "variantId");
+  const tiers = indexedFormEntries(data, "tiers", "minimum")
+    .filter((index) => String(data.get(`tiers[${index}][minimum]`) ?? "").trim() || String(data.get(`tiers[${index}][price]`) ?? "").trim())
+    .map((index) => ({
+      minimumQuantity: requiredPositiveInteger(data, `tiers[${index}][minimum]`),
+      unitPriceCents: requiredMoneyCents(data, `tiers[${index}][price]`),
+    }));
+  const validFrom = optionalBrazilDateTime(data, "validFrom");
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    const commerce = new CommerceRepository(db);
+    const table = commerce.createVariantPriceTableVersion(variantId, tiers, session.user.id, validFrom);
+    commerce.publishVariantPriceTable(table.id, session.user.id);
+  } catch (error) {
+    failure = errorMessage(error);
+  } finally { db.close(); }
+  if (failure) redirect(`/admin/produtos/${productId}?erro=${encodeURIComponent(failure)}`);
+  revalidatePath(`/admin/produtos/${productId}`);
+  revalidatePath("/produtos");
+  redirect(`/admin/produtos/${productId}?sucesso=${encodeURIComponent("Nova versão de preço publicada.")}`);
+}
+
+export async function createCategoryAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    const slug = requiredText(data, "slug");
+    new CommerceRepository(db).createCategory({
+      name: requiredText(data, "name"),
+      slug,
+      description: requiredText(data, "description"),
+      imageUrl: String(data.get("imageUrl") ?? "").trim() || null,
+      seo: {
+        title: requiredText(data, "seoTitle"),
+        description: requiredText(data, "seoDescription"),
+        canonicalPath: `/categorias/${slug}`,
+        socialImageUrl: String(data.get("imageUrl") ?? "").trim() || null,
+      },
+      displayOrder: Number(data.get("displayOrder") ?? 0),
+      status: data.get("published") === "true" ? "PUBLISHED" : "DRAFT",
+    }, session.user.id);
+  } catch (error) { failure = errorMessage(error); } finally { db.close(); }
+  if (failure) redirect(`/admin/categorias?erro=${encodeURIComponent(failure)}`);
+  revalidatePath("/admin/categorias"); revalidatePath("/produtos");
+  redirect(`/admin/categorias?sucesso=${encodeURIComponent("Categoria cadastrada.")}`);
+}
+
+export async function publishCategoryAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    new CommerceRepository(db).publishCategory(requiredText(data, "categoryId"), session.user.id);
+  } catch (error) {
+    failure = errorMessage(error);
+  } finally {
+    db.close();
+  }
+  if (failure) redirect(`/admin/categorias?erro=${encodeURIComponent(failure)}`);
+  revalidatePath("/admin/categorias");
+  revalidatePath("/produtos");
+  revalidatePath("/categorias");
+  redirect(`/admin/categorias?sucesso=${encodeURIComponent("Categoria publicada.")}`);
+}
+
+export async function saveCommerceSettingsAction(data: FormData) {
+  const session = await requireStaff(["ADMIN"]);
+  const db = openDatabase();
+  let failure: string | null = null;
+  try {
+    const settings = {
+      catalogEnabled: data.get("catalogEnabled") === "true",
+      directCheckoutEnabled: data.get("directCheckoutEnabled") === "true",
+      cardEnabled: data.get("cardEnabled") === "true",
+      shippingEnabled: data.get("shippingEnabled") === "true",
+      maxInstallments: requiredPositiveInteger(data, "maxInstallments"),
+      statementDescriptor: requiredText(data, "statementDescriptor").toUpperCase(),
+    };
+    await getCommercePaymentGateway().updateSettings({
+      maxInstallments: settings.maxInstallments,
+      statementDescriptor: settings.statementDescriptor,
+      cardEnabled: settings.cardEnabled,
+    });
+    new CommerceRepository(db).updateSettings(settings, session.user.id);
+  } catch (error) { failure = errorMessage(error); } finally { db.close(); }
+  if (failure) redirect(`/admin/integracoes?erro=${encodeURIComponent(failure)}`);
+  revalidatePath("/admin/integracoes"); revalidatePath("/produtos"); revalidatePath("/carrinho");
+  redirect(`/admin/integracoes?sucesso=${encodeURIComponent("Configurações comerciais atualizadas.")}`);
+}
+
 const correctionCategoryLabels: Record<string, string> = {
   DIMENSIONS: "Dimensões ou proporção",
   RESOLUTION: "Resolução insuficiente",
@@ -521,11 +949,16 @@ export async function reviewArtworkAction(data: FormData) {
         new ProductRepository(db).getDtfAggregate(order.productId)?.productionPolicy
           ?.customLeadTimeAboveMeters ?? 100;
       if (order.quantityMeters <= threshold) {
-        orders.updateStatuses(
-          order.id,
-          { productionStatus: "QUEUED" },
-          session.user.id,
-        );
+        db.transaction(() => {
+          orders.releaseApprovedItems(order.id, session.user.id);
+          const blocked = db.prepare(
+            "SELECT 1 FROM order_items WHERE order_id = ? AND production_status = 'BLOCKED' LIMIT 1",
+          ).get(order.id);
+          const refreshed = orders.findById(order.id);
+          if (!blocked && refreshed?.artworkStatus === "APPROVED") {
+            orders.updateStatuses(order.id, { productionStatus: "QUEUED" }, session.user.id);
+          }
+        })();
       }
     } else if (decision === "CHANGES_REQUESTED") {
       if (!category || !correctionCategoryLabels[category]) {
@@ -577,48 +1010,59 @@ export async function updateOrderWorkflowAction(data: FormData) {
       products.getDtfAggregate(order.productId)?.productionPolicy
         ?.customLeadTimeAboveMeters ?? 100;
 
-    if (command === "QUEUE") {
+    if (command === "APPROVE_PERSONALIZATION") {
+      if (order.artworkStatus !== "PENDING_REVIEW") {
+        throw new Error("A personalização deste pedido não está aguardando revisão.");
+      }
+      orders.approveStructuredPersonalizations(order.id, session.user.id);
+    } else if (command === "QUEUE") {
       if (order.productionStatus !== "BLOCKED") {
         throw new Error("Somente um pedido bloqueado pode entrar na fila.");
       }
       if (order.paymentStatus !== "PAID" || order.artworkStatus !== "APPROVED") {
         throw new Error("A fila exige Pix confirmado e arte aprovada.");
       }
-      orders.updateStatuses(
-        order.id,
-        {
-          productionStatus: "QUEUED",
-          manualLeadTimeNote:
-            order.quantityMeters > largeOrderThreshold
-              ? manualLeadTimeNote || null
-              : order.manualLeadTimeNote,
-        },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.transitionItemProduction(order.id, "BLOCKED", "QUEUED", session.user.id);
+        orders.updateStatuses(
+          order.id,
+          {
+            productionStatus: "QUEUED",
+            manualLeadTimeNote:
+              order.quantityMeters > largeOrderThreshold
+                ? manualLeadTimeNote || null
+                : order.manualLeadTimeNote,
+          },
+          session.user.id,
+        );
+      })();
     } else if (command === "START") {
       if (order.productionStatus !== "QUEUED") {
         throw new Error("Somente um pedido na fila pode iniciar a produção.");
       }
-      orders.updateStatuses(
-        order.id,
-        { productionStatus: "IN_PRODUCTION" },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.transitionItemProduction(order.id, "QUEUED", "IN_PRODUCTION", session.user.id);
+        orders.updateStatuses(order.id, { productionStatus: "IN_PRODUCTION" }, session.user.id);
+      })();
     } else if (command === "READY") {
       if (order.productionStatus !== "IN_PRODUCTION") {
         throw new Error("Somente um pedido em produção pode ficar pronto.");
       }
-      orders.updateStatuses(
-        order.id,
-        {
-          productionStatus: "READY",
-          fulfillmentStatus:
-            order.fulfillmentMethod === "PICKUP"
-              ? "READY_FOR_PICKUP"
-              : order.fulfillmentStatus,
-        },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.transitionItemProduction(order.id, "IN_PRODUCTION", "READY", session.user.id);
+        const fulfillmentStatus = order.fulfillmentMethod === "PICKUP"
+          ? "READY_FOR_PICKUP"
+          : order.fulfillmentStatus;
+        orders.updateStatuses(
+          order.id,
+          { productionStatus: "READY", fulfillmentStatus },
+          session.user.id,
+        );
+        if (order.fulfillmentMethod === "PICKUP") {
+          db.prepare("UPDATE fulfillments SET status = 'READY_FOR_PICKUP', updated_at = ? WHERE order_id = ?")
+            .run(new Date().toISOString(), order.id);
+        }
+      })();
     } else if (command === "PICKED_UP") {
       if (
         order.fulfillmentMethod !== "PICKUP" ||
@@ -627,29 +1071,39 @@ export async function updateOrderWorkflowAction(data: FormData) {
       ) {
         throw new Error("O pedido ainda não está pronto para retirada.");
       }
-      orders.updateStatuses(
-        order.id,
-        { productionStatus: "COMPLETED", fulfillmentStatus: "PICKED_UP" },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.transitionItemProduction(order.id, "READY", "COMPLETED", session.user.id);
+        orders.updateStatuses(
+          order.id,
+          { productionStatus: "COMPLETED", fulfillmentStatus: "PICKED_UP" },
+          session.user.id,
+        );
+        db.prepare("UPDATE fulfillments SET status = 'PICKED_UP', updated_at = ? WHERE order_id = ?")
+          .run(new Date().toISOString(), order.id);
+      })();
     } else if (command === "SHIPPED") {
       if (order.fulfillmentMethod !== "SHIPPING" || order.productionStatus !== "READY") {
         throw new Error("Somente um pedido de entrega pronto pode ser enviado.");
       }
-      orders.updateStatuses(
-        order.id,
-        { fulfillmentStatus: "SHIPPED" },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.updateStatuses(order.id, { fulfillmentStatus: "SHIPPED" }, session.user.id);
+        db.prepare("UPDATE fulfillments SET status = 'SHIPPED', updated_at = ? WHERE order_id = ?")
+          .run(new Date().toISOString(), order.id);
+      })();
     } else if (command === "DELIVERED") {
       if (order.fulfillmentMethod !== "SHIPPING" || order.fulfillmentStatus !== "SHIPPED") {
         throw new Error("Somente um pedido enviado pode ser marcado como entregue.");
       }
-      orders.updateStatuses(
-        order.id,
-        { productionStatus: "COMPLETED", fulfillmentStatus: "DELIVERED" },
-        session.user.id,
-      );
+      db.transaction(() => {
+        orders.transitionItemProduction(order.id, "READY", "COMPLETED", session.user.id);
+        orders.updateStatuses(
+          order.id,
+          { productionStatus: "COMPLETED", fulfillmentStatus: "DELIVERED" },
+          session.user.id,
+        );
+        db.prepare("UPDATE fulfillments SET status = 'DELIVERED', updated_at = ? WHERE order_id = ?")
+          .run(new Date().toISOString(), order.id);
+      })();
     } else if (command === "CANCEL") {
       if (order.productionStatus === "COMPLETED") {
         throw new Error("Um pedido concluído não pode ser cancelado.");

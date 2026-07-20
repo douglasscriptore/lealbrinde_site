@@ -8,7 +8,6 @@ export default async function DtfIndexPage({
 }) {
   const query = await searchParams;
   const featured = getFeaturedDtfProduct();
-  const destination = featured?.aggregate.product.slug;
-  if (!destination) redirect("/contato");
+  const destination = featured?.aggregate.product.slug ?? "/dtf/textil-por-metro";
   redirect(`${destination}${query.acao === "calcular" ? "#calcular" : ""}`);
 }

@@ -5,3 +5,4 @@ export * from "./operational-repositories";
 export * from "./product-repository";
 export * from "./schema";
 export * from "./seed";
+export * from "./commerce-repository";

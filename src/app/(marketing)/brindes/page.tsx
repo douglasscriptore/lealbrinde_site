@@ -1,65 +1,37 @@
-import {
-  Gift,
-  IdentificationCard,
-  ShoppingBagOpen,
-  TShirt,
-  Tag,
-} from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { Reveal, ShopeeShowcase } from "@/components/marketing";
+import { ProductCard } from "@/components/commerce";
+import { Reveal } from "@/components/marketing";
+import { getCatalog } from "@/server/queries/catalog";
 
 export const metadata: Metadata = {
   title: "Brindes personalizados",
-  description: "Encontre brindes personalizados para empresas, eventos e ações de relacionamento.",
+  description: "Brindes personalizados para empresas, eventos, equipes e ações de relacionamento.",
+  alternates: { canonical: "/brindes" },
 };
-
-const availableFamilies = [
-  { icon: Gift, label: "Brindes personalizados" },
-  { icon: Tag, label: "Etiquetas termocolantes" },
-  { icon: TShirt, label: "Estampas e camisetas" },
-  { icon: IdentificationCard, label: "Crachás personalizados" },
-];
+export const dynamic = "force-dynamic";
 
 export default function GiftsPage() {
+  const { products } = getCatalog({ categoria: "brindes" });
   return (
     <main id="conteudo">
-      <section className="bg-[radial-gradient(circle_at_80%_14%,var(--marketplace-soft),transparent_25%),radial-gradient(circle_at_12%_84%,var(--surface-strong),transparent_34%),var(--background)] py-16 sm:py-24">
-        <div className="mx-auto grid max-w-shell gap-12 px-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-end lg:gap-20 lg:px-8">
+      <section className="bg-[radial-gradient(circle_at_82%_12%,var(--accent-soft),transparent_30%),var(--background)] py-16 sm:py-24">
+        <div className="mx-auto max-w-shell px-4 sm:px-6 lg:px-8">
           <Reveal className="max-w-4xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">Brindes personalizados</p>
-            <h1 className="mt-6 max-w-[13ch] text-balance text-[clamp(3.6rem,7vw,7.2rem)] font-black leading-[0.89] tracking-[-0.065em] text-foreground">
-              Sua marca presente no dia a dia.
-            </h1>
-            <p className="mt-7 max-w-[62ch] text-base leading-relaxed text-muted sm:text-lg">
-              Produtos para empresas, eventos, equipes e ações de relacionamento. Enquanto o novo catálogo fica pronto, nossa loja oficial na Shopee reúne opções que já podem ser consultadas.
-            </p>
-          </Reveal>
-
-          <Reveal variant="scale" delay={0.08} className="rounded-card border border-border bg-white p-6 shadow-premium sm:p-8">
-            <div className="flex items-center justify-between gap-5">
-              <ShoppingBagOpen aria-hidden="true" size={32} weight="duotone" className="text-marketplace" />
-              <span className="rounded-full bg-marketplace-soft px-3 py-1 text-xs font-bold text-marketplace">
-                Disponíveis na loja
-              </span>
-            </div>
-            <ul className="mt-8 divide-y divide-border">
-              {availableFamilies.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-3 py-4 first:pt-0 last:pb-0">
-                  <Icon aria-hidden="true" size={21} weight="duotone" className="shrink-0 text-accent" />
-                  <span className="font-semibold text-foreground">{label}</span>
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm font-bold text-accent">Brindes personalizados</p>
+            <h1 className="mt-5 max-w-[13ch] text-balance text-5xl font-black leading-[0.95] tracking-[-0.055em] text-foreground sm:text-7xl">Sua marca presente no dia a dia.</h1>
+            <p className="mt-6 max-w-[58ch] text-base leading-7 text-muted sm:text-lg">Produtos para empresas, eventos e equipes, com preço e opções administrados diretamente pela Leal Brinde.</p>
+            <Link href="/produtos" className="mt-8 inline-flex min-h-12 items-center rounded-full bg-accent px-6 font-bold text-accent-foreground">Explorar todo o catálogo</Link>
           </Reveal>
         </div>
       </section>
-
-      <ShopeeShowcase
-        eyebrow="Catálogo atual"
-        title="Escolha com confiança em nossa loja oficial"
-        description="A Leal Brinde mantém uma vitrine ativa na Shopee com brindes, etiquetas, DTF pronto e outros personalizados. Consulte cada anúncio para conferir personalização, prazo e disponibilidade."
-      />
+      <section className="py-14 sm:py-20">
+        <div className="mx-auto max-w-shell px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-black tracking-tight">Brindes disponíveis</h2>
+          {products.length ? <div className="mt-9 grid gap-6 md:grid-cols-2 xl:grid-cols-[1.1fr_0.9fr_0.9fr]">{products.map((product) => <ProductCard key={product.product.id} summary={product} />)}</div> : <div className="mt-9 rounded-card border border-dashed border-border bg-surface-strong p-8"><h3 className="text-xl font-black">Primeiros produtos em preparação</h3><p className="mt-2 text-sm leading-6 text-muted">O catálogo será liberado quando as opções, imagens e preços reais forem publicados pelo painel.</p></div>}
+        </div>
+      </section>
     </main>
   );
 }

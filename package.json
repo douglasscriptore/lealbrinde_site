@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:seed": "tsx scripts/seed.ts",
-    "db:backup": "tsx scripts/backup.ts"
+    "db:backup": "tsx scripts/backup.ts",
+    "payment:confirm:local": "tsx scripts/confirm-local-commerce-pix.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

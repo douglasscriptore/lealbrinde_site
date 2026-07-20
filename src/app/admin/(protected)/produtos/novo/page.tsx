@@ -1,25 +1,54 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { primaryButtonClasses, secondaryButtonClasses } from "@/components/operations";
+import { primaryButtonClasses, secondaryButtonClasses, StandardProductForm } from "@/components/operations";
 import { requireStaff } from "@/server/auth/session";
+import { CommerceRepository, openDatabase } from "@/server/db";
 
-import { createDtfProductFromTemplateAction } from "../../actions";
+import { createDtfProductFromTemplateAction, createStandardProductAction } from "../../actions";
 
-export const metadata: Metadata = { title: "Novo produto DTF" };
+export const metadata: Metadata = { title: "Novo produto" };
 
 export default async function NewProductPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; tipo?: string }>;
 }) {
   await requireStaff(["ADMIN"]);
-  const { erro } = await searchParams;
+  const { erro, tipo } = await searchParams;
+  const db = openDatabase();
+  const categories = new CommerceRepository(db).listCategories().filter((category) => category.status !== "ARCHIVED");
+  db.close();
+
+  if (tipo === "padrao") {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header>
+          <p className="text-sm font-bold text-accent">Catálogo próprio</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight">Cadastrar produto padrão</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Configure opções, combinações, estoque, dimensões e personalização. O produto começa como rascunho.</p>
+        </header>
+        <StandardProductForm categories={categories} action={createStandardProductAction} error={erro?.slice(0, 500)} />
+      </div>
+    );
+  }
+
+  if (tipo !== "dtf") {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <header><p className="text-sm font-bold text-accent">Novo cadastro</p><h2 className="mt-2 text-3xl font-black tracking-tight">Qual produto você quer criar?</h2></header>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Link href="/admin/produtos/novo?tipo=padrao" className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-accent hover:shadow-premium"><h3 className="text-xl font-black">Produto padrão</h3><p className="mt-3 text-sm leading-6 text-slate-600">Brindes com variações, estoque, preço por quantidade e personalização.</p><span className="mt-6 inline-flex font-bold text-accent">Configurar produto</span></Link>
+          <Link href="/admin/produtos/novo?tipo=dtf" className="rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-accent hover:shadow-premium"><h3 className="text-xl font-black">DTF por metro</h3><p className="mt-3 text-sm leading-6 text-slate-600">Duplica políticas, conteúdo e preços de um produto DTF existente.</p><span className="mt-6 inline-flex font-bold text-accent">Criar DTF</span></Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
-        <p className="text-sm font-bold uppercase tracking-[0.12em] text-accent">Catálogo DTF</p>
+        <p className="text-sm font-bold text-accent">Catálogo DTF</p>
         <h2 className="mt-2 text-3xl font-black tracking-tight">Cadastrar produto</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
           O novo rascunho recebe cópias independentes das políticas, especificações e preços do produto modelo. Depois, cada seção pode ser revisada sem alterar pedidos ou produtos existentes.

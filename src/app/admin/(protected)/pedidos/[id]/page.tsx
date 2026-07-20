@@ -109,12 +109,18 @@ export default async function AdminOrderPage({
               Modalidade: <strong>{detail.fulfillmentMethodLabel}</strong>
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Até {detail.customLeadTimeAboveMeters} metros, o início ocorre em até{" "}
-              {detail.standardStartWithinBusinessHours}{" "}
-              {detail.standardStartWithinBusinessHours === 1
-                ? "hora útil"
-                : "horas úteis"}{" "}
-              depois do Pix e da arte aprovados. Acima desse volume, o prazo é manual.
+              {detail.isDtfOrder ? (
+                <>
+                  Até {detail.customLeadTimeAboveMeters} metros, o início ocorre em até{" "}
+                  {detail.standardStartWithinBusinessHours}{" "}
+                  {detail.standardStartWithinBusinessHours === 1
+                    ? "hora útil"
+                    : "horas úteis"}{" "}
+                  depois do Pix e da arte aprovados. Acima desse volume, o prazo é manual.
+                </>
+              ) : (
+                "A produção é liberada depois do pagamento e da aprovação da personalização."
+              )}
             </p>
             {detail.manualLeadTimeNote ? (
               <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm leading-5 text-amber-900">
@@ -133,6 +139,30 @@ export default async function AdminOrderPage({
                 {detail.paymentAttempts.length} tentativa(s) de pagamento e{" "}
                 {detail.fiscalDocumentCount} documento(s) fiscal(is).
               </p>
+              {detail.fiscalData ? (
+                <dl className="mt-4 grid gap-2 rounded-xl bg-slate-50 p-4 text-sm">
+                  <StatusRow
+                    label="Nota fiscal"
+                    value={detail.fiscalData.requested ? "Solicitada" : "Dados do pedido"}
+                  />
+                  {detail.fiscalData.requested ? (
+                    <>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Pessoa</dt>
+                        <dd className="font-bold">{detail.fiscalData.partyType}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">Nome ou razão social</dt>
+                        <dd className="text-right font-bold">{detail.fiscalData.legalName}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-slate-500">CPF ou CNPJ</dt>
+                        <dd className="font-mono font-bold">{detail.fiscalData.document}</dd>
+                      </div>
+                    </>
+                  ) : null}
+                </dl>
+              ) : null}
               {detail.fiscalDocuments.length ? (
                 <ul className="mt-4 space-y-2">
                   {detail.fiscalDocuments.map((document) => (
@@ -172,6 +202,53 @@ export default async function AdminOrderPage({
           ) : null}
         </aside>
       </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <Package aria-hidden="true" className="text-accent" size={22} />
+          <div>
+            <h2 className="text-lg font-black">Itens e personalização</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Confira exatamente o que será produzido antes de liberar o pedido.
+            </p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          {detail.items.map((item) => (
+            <article className="rounded-xl border border-slate-200 p-4" key={item.id}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-black">{item.productName}</h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {item.sku ?? "Sem SKU"}, {item.quantityLabel}
+                  </p>
+                </div>
+                <strong>{item.totalLabel}</strong>
+              </div>
+              {item.customization.length ? (
+                <dl className="mt-4 grid gap-2 rounded-lg bg-slate-50 p-3 text-sm">
+                  {item.customization.map((field) => (
+                    <div className="flex justify-between gap-4" key={`${item.id}-${field.label}`}>
+                      <dt className="text-slate-500">{field.label}</dt>
+                      <dd className="text-right font-bold">{field.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="mt-4 text-sm text-slate-500">Sem campos adicionais.</p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
+                <span className="rounded-full bg-slate-100 px-3 py-1.5">
+                  Personalização: {item.artworkStatusLabel}
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5">
+                  Produção: {item.productionStatusLabel}
+                </span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {["OPERATOR", "ADMIN"].includes(session.role) ? (
         <WorkflowActions detail={detail} />
@@ -232,6 +309,14 @@ function WorkflowActions({ detail }: { detail: WorkflowDetail }) {
         Cada mudança registra o usuário, o estado anterior e o novo estado na auditoria.
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
+        {detail.hasStructuredPersonalizationPending &&
+        detail.paymentStatus === "PAID" ? (
+          <WorkflowButton
+            command="APPROVE_PERSONALIZATION"
+            label="Aprovar personalização"
+            orderId={detail.order.id}
+          />
+        ) : null}
         {detail.productionStatus === "BLOCKED" &&
         detail.paymentStatus === "PAID" &&
         detail.artworkStatus === "APPROVED" ? (
@@ -241,7 +326,8 @@ function WorkflowActions({ detail }: { detail: WorkflowDetail }) {
           >
             <input name="orderId" type="hidden" value={detail.order.id} />
             <input name="command" type="hidden" value="QUEUE" />
-            {detail.quantityMeters > detail.customLeadTimeAboveMeters ? (
+            {detail.isDtfOrder &&
+            detail.quantityMeters > detail.customLeadTimeAboveMeters ? (
               <label className="text-sm font-bold">
                 Prazo combinado acima de {detail.customLeadTimeAboveMeters} metros
                 <textarea

@@ -2,6 +2,7 @@ import type Database from "better-sqlite3";
 
 import type {
   ArtworkReviewStatus,
+  ArtworkStatus,
   ArtworkVersion,
   FileScanStatus,
   FiscalDocument,
@@ -143,6 +144,18 @@ export class PaymentAttemptRepository {
         .get(provider, providerReference),
     );
     return row ? mapPaymentAttempt(row) : null;
+  }
+
+  findByProviderReferenceAny(providerReference: string): PaymentAttempt | null {
+    const rows = asRows(
+      this.db.prepare(
+        "SELECT * FROM payment_attempts WHERE provider_reference = ? LIMIT 2",
+      ).all(providerReference),
+    );
+    if (rows.length > 1) {
+      throw new Error("A referência de pagamento é ambígua entre provedores.");
+    }
+    return rows[0] ? mapPaymentAttempt(rows[0]) : null;
   }
 
   findByIdempotencyKey(idempotencyKey: string): PaymentAttempt | null {
@@ -383,7 +396,9 @@ export class ArtworkVersionRepository {
     metadataPatch: Record<string, unknown> = {},
   ): ArtworkVersion {
     const version = this.requireVersion(versionId);
-    const latest = this.listForOrder(version.orderId)[0];
+    const latest = this.listForOrder(version.orderId).find(
+      (candidate) => candidate.orderItemId === version.orderItemId,
+    );
     if (!latest || latest.id !== version.id) {
       throw new Error("Somente a versão mais recente da arte pode ser revisada.");
     }
@@ -422,11 +437,25 @@ export class ArtworkVersionRepository {
       if (result.changes !== 1) {
         throw new Error("Esta versão da arte já recebeu uma decisão.");
       }
-      this.orders.updateStatuses(
-        version.orderId,
-        { artworkStatus: artworkStatus[status] },
-        actorId,
-      );
+      if (version.orderItemId) {
+        this.db.prepare(
+          "UPDATE order_items SET artwork_status = ?, updated_at = ? WHERE id = ?",
+        ).run(artworkStatus[status], timestamp, version.orderItemId);
+      }
+      const itemStatuses = asRows(
+        this.db.prepare("SELECT artwork_status FROM order_items WHERE order_id = ?")
+          .all(version.orderId),
+      ).map((row) => String(row.artwork_status));
+      const aggregateStatus: ArtworkStatus = version.orderItemId
+        ? itemStatuses.includes("CHANGES_REQUESTED")
+          ? "CHANGES_REQUESTED"
+          : itemStatuses.includes("AUTO_REJECTED")
+            ? "AUTO_REJECTED"
+            : itemStatuses.every((itemStatus) => ["APPROVED", "NOT_REQUIRED"].includes(itemStatus))
+              ? "APPROVED"
+              : "PENDING_REVIEW"
+        : artworkStatus[status];
+      this.orders.updateStatuses(version.orderId, { artworkStatus: aggregateStatus }, actorId);
       writeAudit(this.db, {
         actorId,
         action: "ARTWORK_REVIEWED",

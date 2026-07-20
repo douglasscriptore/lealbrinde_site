@@ -1,179 +1,99 @@
-# Planejamento consolidado v2: Leal Brinde e produto DTF cadastrável
+# Planejamento v3 - Catálogo próprio e modernização comercial completa
 
-## 1. Objetivo
+## Objetivo
 
-Construir uma plataforma nova em Next.js com site comercial, produto DTF cadastrável, cálculo por metragem, Pix, revisão de arte, acompanhamento do pedido, documentos fiscais e painel administrativo. O site atual continuará intocado até uma decisão específica sobre migração ou convivência.
+Evoluir a Leal Brinde para um e-commerce próprio em Next.js, preservando o DTF existente e a linguagem premium clara baseada em Tailwind 4 e Motion.
 
 Decisões confirmadas:
 
-- O DTF será um produto cadastrado no painel, não uma configuração global fixa.
-- O preço será aplicado pela faixa total atingida.
-- A quantidade será informada somente em metros inteiros.
-- O Pix será gerado após a validação automática mínima e antes da revisão humana.
-- Pedidos de até 100 metros entram em produção em até 24 horas úteis após Pix confirmado e arte aprovada.
-- Pedidos acima de 100 metros terão prazo manual conforme a fila.
-- A queda de R$ 3.158,10 em 99 metros para R$ 2.790,00 em 100 metros será mantida e comunicada com transparência.
-- Next.js é a única tecnologia fixada antecipadamente. Provedores externos serão ligados por adaptadores.
+- Produtos comuns serão comprados diretamente no site.
+- DTF e produtos comuns poderão coexistir no mesmo carrinho.
+- Carrinho com qualquer item DTF aceitará somente Pix.
+- Carrinho sem DTF aceitará Pix e cartão.
+- Produtos personalizados serão pagos antes da revisão humana.
+- O pedido será enviado junto quando todos os itens estiverem prontos.
+- Frete nacional será calculado pelo Melhor Envio e retirada local será gratuita.
+- Login será obrigatório antes do checkout.
+- Produtos, variações, preços, estoque, personalização e frete serão gerenciados pelo painel.
+- Não haverá importação, avaliações próprias, analytics, CMS externo ou Storybook nesta etapa.
+- A Shopee ficará apenas no rodapé como canal secundário.
 
-## 2. Estrutura do produto
+## Experiência pública
 
-Cada produto terá nome, slug, código, tipo, resumo, descrição, capa, galeria, estado, destaque, ordem, atendimento, pagamentos, SEO, publicação e histórico. Os estados serão `DRAFT`, `PUBLISHED` e `ARCHIVED`. Os tipos iniciais serão `DTF_BY_METER` e `STANDARD_PRODUCT`.
+O tema permanece fixo em modo claro, com branco, azul-gelo, grafite e turquesa. Tailwind semântico será a fonte principal dos estilos, com fotografia real, bordas finas, sombras azuladas e movimento restrito a transformações e opacidade. Marketing terá movimento expressivo e as superfícies operacionais usarão animações apenas como feedback.
 
-Produtos DTF terão configuração própria:
+Rotas principais:
 
-```ts
-type DtfProductConfiguration = {
-  productId: string;
-  minimumMeters: number;
-  meterIncrement: number;
-  pricingMode: "VOLUME_TOTAL";
-  paymentMethods: ["PIX"];
-  printableWidthCm: number;
-  filePolicyId: string;
-  productionPolicyId: string;
-  fulfillmentOptions: Array<"PICKUP" | "SHIPPING">;
-};
-```
+- `/produtos`: catálogo com categorias, busca, filtros, ordenação e paginação.
+- `/produtos/[slug]`: página rica do produto.
+- `/categorias/[...slug]`: páginas comerciais indexáveis.
+- `/busca?q=`: busca por nome, código, conteúdo e atributos.
+- `/carrinho`: carrinho misto persistente.
+- `/checkout`: fluxo protegido por autenticação.
+- `/brindes`: entrada para o catálogo próprio.
+- `/pulseiras-e-cordoes`: pré-lançamento até existirem produtos publicados.
 
-O sistema aceitará múltiplos produtos DTF, mas somente um poderá ser o destaque principal da home.
+A home priorizará catálogo, categorias, produtos selecionados, DTF, pulseiras e cordões, processo de personalização, produção, retirada, entrega e FAQ. O bloco da Shopee sai da home e de Brindes. O rodapé mantém um link compacto e a prova manual de mais de 4 mil vendas, sem estrelas ou avaliações.
 
-## 3. Produto inicial
+Busca pública usará SQLite FTS5. Filtros serão derivados dos atributos cadastrados e representados na URL. A página de produto terá galeria, variações, quantidade, preço por faixa, personalização, prazo, estoque, frete, retirada, especificações e CTA móvel. Preços serão públicos e dados estruturados serão emitidos apenas com informações reais.
 
-- Nome: `DTF Têxtil por Metro`
-- Slug: `/dtf/textil-por-metro`
-- Tipo: `DTF_BY_METER`
-- Unidade: metro
-- Mínimo e incremento: 1 metro
-- Pagamento: Pix
-- Atendimento: retirada ou entrega
-- Revisão humana obrigatória após o pagamento
-- Estado inicial: rascunho até a confirmação das regras de arquivo
+## Catálogo e administração
 
-### Tabela de preços
+O catálogo terá produtos padrão e DTF. Produtos padrão terão opções administráveis, variantes por combinação, SKU, preço base, mínimo, incremento, estoque controlado ou fabricação sob encomenda, peso, dimensões e estado de publicação.
 
-| Quantidade | Valor unitário | Regra interna |
-|---|---:|---|
-| 1 a 5 m | R$ 39,90 | `min: 1`, `maxExclusive: 6`, `unitPrice: 3990` |
-| 6 a 10 m | R$ 34,90 | `min: 6`, `maxExclusive: 11`, `unitPrice: 3490` |
-| 11 a 99 m | R$ 31,90 | `min: 11`, `maxExclusive: 100`, `unitPrice: 3190` |
-| 100 m ou mais | R$ 27,90 | `min: 100`, `maxExclusive: null`, `unitPrice: 2790` |
+Personalização:
 
-O subtotal será `quantidadeEmMetros * valorUnitarioDaFaixa`. A calculadora destacará que 100 metros custam menos que 99 e oferecerá a troca sem alterar a quantidade automaticamente.
+- `NONE`: sem personalização.
+- `STRUCTURED_FIELDS`: texto, texto longo, seleção, número, cor e observação.
+- `ARTWORK_UPLOAD`: arquivo privado com preflight, versões e revisão humana.
 
-Tabelas publicadas serão imutáveis. Mudanças criarão uma nova versão com vigência. O pedido guardará um snapshot do produto, faixa, valor unitário e total.
+Preços por quantidade serão versionados. Pedidos guardarão snapshots imutáveis de produto, variante, faixa, personalização e valores. Produtos publicados com entrega deverão possuir peso e dimensões. Produtos sem preço determinável não poderão ser publicados para compra direta.
 
-## 4. Conteúdo técnico e produção
+O painel terá categorias, coleções, produtos, variantes, preços, estoque, personalizações, mídia, SEO, publicação, pedidos, produção por item, artes, pagamentos, reembolsos, Melhor Envio, documentos fiscais, auditoria e integrações.
 
-As especificações serão blocos estruturados e ordenáveis, agrupados em filme, adesivo, impressão e compatibilidade. O cadastro inicial incluirá PET Premium Hot Peel, 75 micras, Double Matte, revestimento microporoso, TPU Premium, cabeças Epson i3200, resolução de até 720 x 1440 DPI, perfis ICC e compatibilidade com algodão, poliéster e tecidos mistos.
+Permissões:
 
-As alegações permanecerão como conteúdo administrável e deverão ser confirmadas pela Leal Brinde antes da publicação. Não serão inventadas fontes, certificações, parâmetros de prensa ou quantidade de lavagens.
+- `OPERATOR`: pedidos, artes, produção e entrega.
+- `FINANCE`: pagamentos, documentos e reembolsos.
+- `ADMIN`: catálogo, preços, estoque, configurações e integrações.
 
-Equipamentos iniciais:
+## Carrinho e pedidos
 
-| Quantidade | Equipamento | Produção unitária |
-|---:|---|---:|
-| 2 | Impressora DTF | 27 m/h |
-| 1 | Impressora DTF | 11 m/h |
+O carrinho poderá começar anonimamente usando cookie assinado e `HttpOnly`. Depois do login ele será vinculado ou mesclado à conta. O servidor recalculará preço, estoque e frete antes do pagamento.
 
-A capacidade nominal será calculada como 65 m/h. Ela não será usada automaticamente para prometer uma data de conclusão.
+O pedido será uma entidade principal com múltiplos itens. Pagamento e entrega ficam no pedido. Arte e produção ficam por item. Se houver DTF, o pedido inteiro aceitará apenas Pix. Sem DTF, aceitará Pix e cartão quando a integração estiver ativa. A expedição só será liberada quando todos os itens estiverem prontos.
 
-Política de produção:
+Estoque controlado será reservado ao iniciar o pagamento e liberado em falha, expiração ou cancelamento. Mudanças após pagamento nunca recalcularão silenciosamente: exigirão cancelamento, reembolso ou novo pedido.
 
-```ts
-type ProductionPolicy = {
-  startTrigger: "PAYMENT_CONFIRMED_AND_ARTWORK_APPROVED";
-  standardStartWithinBusinessHours: 24;
-  customLeadTimeAboveMeters: 100;
-  largeOrderMode: "MANUAL_CONFIRMATION";
-};
-```
+## Pagamentos e logística
 
-## 5. Página pública do produto
+A `payment_api` continuará como integração única com Mercado Pago. Será adicionado um contrato v2 para múltiplos itens, preservando o endpoint legado de produto único. O site recalculará o pedido e enviará um snapshot congelado com idempotência. Cartões serão tokenizados no navegador com MercadoPago.js. A `payment_api` enviará eventos assinados por HMAC e o site processará eventos duplicados ou fora de ordem de forma idempotente.
 
-A página terá hero com CTA para calcular, tabela de preços, calculadora com total, especificações agrupadas, capacidade nominal, compatibilidade, diferenciais, retirada ou entrega, guia do arquivo, FAQ e CTA final.
+A administração terá máximo de parcelas, opções auxiliares, descritor da fatura, ativação de cartão e prévia de parcelamento. Essas configurações serão acessadas por rotas administrativas autenticadas da `payment_api`. A taxa de serviço da Leal permanecerá zero.
 
-Mensagem principal: `Produção própria, filme Premium Hot Peel e impressão em alta definição para algodão, poliéster e tecidos mistos.`
+O Melhor Envio receberá origem, destino e os dados físicos dos itens. A cotação escolhida será armazenada e revalidada antes do pagamento. Compra e geração da etiqueta serão ações administrativas depois que todos os itens estiverem prontos. Retirada local não exigirá cotação.
 
-O site exibirá preço por metro e total simultaneamente. Nunca mostrará apenas `a partir de R$ 27,90` sem explicar a faixa mínima.
+## Migração do DTF
 
-## 6. Editor administrativo
+- Criar `order_items` e converter cada pedido DTF existente em um item.
+- Preservar temporariamente as colunas antigas como compatibilidade somente leitura.
+- Associar novas artes ao item do pedido.
+- Migrar estados de arte e produção para o item.
+- Preservar snapshots, pagamentos, documentos, eventos, códigos e URLs.
+- Remover campos legados apenas depois da validação de paridade.
 
-O cadastro do produto será dividido nas abas Básico, Preço, Especificações, Arquivos, Produção, Pagamento, Mídia, SEO e Publicação. O administrador poderá criar, duplicar, pré-visualizar, publicar e arquivar produtos.
+## Etapas de implementação
 
-A publicação será bloqueada se faltar tabela válida, mínimo, política de arquivo, largura útil, pagamento, produção, capa ou SEO básico. Produtos com pedidos nunca poderão ser excluídos, somente arquivados.
+1. Registrar este planejamento e criar migrações compatíveis.
+2. Implementar domínio, repositórios e regras de catálogo, carrinho e pedidos.
+3. Construir catálogo público, busca, filtros, PDP e carrinho.
+4. Construir a administração de produtos padrão, estoque e personalização.
+5. Evoluir a `payment_api` e validar Pix e cartão em sandbox sem quebrar clientes existentes.
+6. Integrar Melhor Envio em sandbox, retirada, etiquetas e rastreamento.
+7. Migrar pedidos DTF, executar piloto e liberar catálogo e checkout por feature flags.
 
-## 7. Fluxo do pedido DTF
+## Validação
 
-1. Cliente escolhe a metragem.
-2. Sistema seleciona a faixa e calcula o total.
-3. Cliente escolhe retirada ou entrega.
-4. Para entrega, o frete final é calculado antes do Pix.
-5. Cliente envia um arquivo pronto.
-6. Sistema valida formato, assinatura, tamanho e integridade.
-7. Cliente informa dados pessoais e fiscais.
-8. Cliente verifica o e-mail.
-9. Servidor recalcula e cria o Pix.
-10. Webhook confirma o pagamento.
-11. Operador revisa e aprova ou solicita correção.
-12. Reenvio cria nova versão do arquivo.
-13. Pedido pago e aprovado entra em produção.
-14. Cliente acompanha retirada ou entrega e acessa a nota fiscal.
+Testes obrigatórios cobrirão preços e faixas, variantes, carrinho misto, restrição Pix para DTF, cartão para produtos padrão, estoque concorrente, personalização, versões de arte, expedição consolidada, retirada, frete, Pix expirado, cartão recusado, webhooks duplicados, reembolsos, compatibilidade da `payment_api`, histórico DTF, autorização, acessibilidade, SEO e responsividade.
 
-Escopo inicial: um arquivo por pedido, versões de substituição, sem editor de gang sheet, sem correção por IA, sem cartão e sem Bling.
-
-## 8. Estados e invariantes
-
-Pagamento: `DRAFT`, `PENDING_PIX`, `PAID`, `EXPIRED`, `FAILED`, `REFUNDED`.
-
-Arte: `UPLOADING`, `QUARANTINED`, `AUTO_REJECTED`, `PENDING_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`.
-
-Produção: `BLOCKED`, `QUEUED`, `IN_PRODUCTION`, `READY`, `COMPLETED`, `CANCELLED`.
-
-Entrega: `PENDING`, `READY_FOR_PICKUP`, `SHIPPED`, `DELIVERED`, `PICKED_UP`.
-
-- Não gerar Pix antes da validação mínima do arquivo.
-- Não produzir antes de `PAID` e `APPROVED`.
-- Reenvio sempre cria uma versão.
-- Ações administrativas geram auditoria.
-- Mudanças que afetem um pedido pago exigem cancelamento ou reembolso conforme política e criação de pedido corrigido.
-
-## 9. Site, cliente e administração
-
-A home apresentará Brindes, DTF por metro e Pulseiras e Cordões. DTF será a entrada principal, Brindes terá destino configurável e Pulseiras permanecerá como setor em desenvolvimento.
-
-A área do cliente mostrará pendências, pedidos em andamento, concluídos e rascunhos. O detalhe terá timeline, Pix, arquivos, correções, produção, entrega, dados fiscais, documentos e recompra.
-
-O painel incluirá visão geral, produtos, categorias, DTF, pedidos, artes, produção, logística, financeiro, fiscal, clientes, estoque, conteúdo, SEO, relatórios, usuários, auditoria, integrações e feature flags.
-
-Papéis iniciais: `CUSTOMER`, `OPERATOR`, `FINANCE` e `ADMIN`.
-
-## 10. Arquitetura
-
-Aplicação Next.js App Router como monólito modular, com Server Components por padrão, banco relacional, armazenamento privado, filas, outbox e integrações por adaptadores. As portas principais serão `PaymentGateway`, `ObjectStorage`, `FileScanner`, `ShippingProvider`, `NotificationService`, `CommerceConnector`, `FiscalIntegration` e `Analytics`.
-
-Dinheiro será armazenado em centavos. A quantidade do produto inicial será inteira. Todo cálculo será repetido no servidor.
-
-## 11. Segurança, SEO e operação
-
-- Autenticação por biblioteca mantida e MFA para equipe.
-- Autorização no servidor e isolamento por propriedade.
-- Arquivos privados, quarentena, verificação de MIME e antimalware.
-- Webhooks validados e idempotentes.
-- Logs sem dados pessoais, Pix ou conteúdo das artes.
-- Backups e auditoria.
-- Páginas públicas indexáveis e áreas transacionais com `noindex`.
-- Metadata, canonical, sitemap, robots, Open Graph e dados estruturados.
-- O site legado permanecerá intocado até um projeto específico de migração.
-
-## 12. Fases e critérios de aceite
-
-1. Fundação, ativos e confirmação das regras comerciais.
-2. Site público, produto cadastrável, SEO e calculadora.
-3. Upload, autenticação, checkout, Pix, portal e revisão de arte.
-4. Operação administrativa, logística, fiscal, catálogo e estoque.
-5. Segurança, acessibilidade, performance, piloto e lançamento gradual.
-6. Decisão futura sobre convivência ou migração do WooCommerce.
-
-Testes cobrirão limites de preço, rejeição de frações, degrau de 99 para 100 metros, versionamento, publicação, Pix, webhooks, arquivos, correções, papéis, propriedade, acessibilidade, responsividade, SEO, backups e reprocessamento.
-
-O MVP será aceito quando o produto puder ser cadastrado, pré-visualizado, publicado, duplicado e arquivado; preços forem versionados e recalculados no servidor; Pix for exclusivo; pedido só produzir após pagamento e aprovação; e cliente e equipe conseguirem acompanhar todo o processo sem acesso manual ao banco.
+Metas: LCP abaixo de 2,5 s, CLS abaixo de 0,1 e INP abaixo de 200 ms. A entrega final deve passar TypeScript, ESLint, testes, build e validação visual com Node 24.18.0.

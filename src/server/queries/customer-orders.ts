@@ -6,6 +6,7 @@ import {
   type CustomerOrderStatus,
   type Order,
   type OrderEvent,
+  type OrderItem,
 } from "@/domain";
 import type {
   CustomerActionItem,
@@ -90,7 +91,7 @@ export function getCustomerOrdersDashboard(
           products.findById(order.productId)?.name ?? "Produto DTF",
         );
       }
-      return mapOrderSummary(order, productNames.get(order.productId)!);
+      return mapOrderSummary(order, productNames.get(order.productId)!, orders.items(order.id));
     });
 
     return {
@@ -147,15 +148,22 @@ export function getCustomerOrderDetail(
     const status = deriveCustomerOrderStatus(order);
     const presentation = statusPresentation[status];
     const latestPayment = payments[0];
+    const items = orders.items(order.id);
+    const firstItem = items[0];
+    const productName = items.length > 1
+      ? `${firstItem?.productName ?? "Produto"} + ${items.length - 1} item(ns)`
+      : firstItem?.productName ?? product?.name ?? "Produto";
 
     return {
       id: order.id,
       code: order.code,
-      productName: product?.name ?? "Produto DTF",
-      quantityLabel: `${order.quantityMeters} ${order.quantityMeters === 1 ? "metro" : "metros"}`,
-      unitPriceLabel: formatMoney(order.priceSnapshot.unitPriceCents),
-      subtotalLabel: formatMoney(order.priceSnapshot.subtotalCents),
-      totalLabel: formatMoney(order.priceSnapshot.subtotalCents),
+      productName,
+      quantityLabel: items.length === 1 && firstItem
+        ? itemQuantityLabel(firstItem)
+        : `${items.length} itens`,
+      unitPriceLabel: formatMoney(firstItem?.unitPriceCents ?? order.priceSnapshot.unitPriceCents),
+      subtotalLabel: formatMoney(order.subtotalCents),
+      totalLabel: formatMoney(order.totalCents),
       statusLabel: presentation.label,
       statusTone: presentation.tone,
       placedAtLabel: formatDate(order.createdAt),
@@ -177,7 +185,7 @@ export function getCustomerOrderDetail(
             : undefined,
       })),
       payment: {
-        methodLabel: "Pix",
+        methodLabel: order.paymentMethod === "PIX" ? "Pix" : "Cartão de crédito",
         statusLabel: paymentStatusLabel(order.paymentStatus),
         statusTone: paymentStatusTone(order.paymentStatus),
         paidAtLabel:
@@ -201,7 +209,9 @@ export function getCustomerOrderDetail(
         downloadHref: `/api/orders/${encodeURIComponent(order.code)}/documents/${encodeURIComponent(document.id)}/download`,
       })),
       supportHref: `/contato?pedido=${encodeURIComponent(order.code)}`,
-      reorderHref: `/dtf/pedido?produto=${encodeURIComponent(order.productId)}&meters=${order.quantityMeters}`,
+      reorderHref: product?.type === "STANDARD_PRODUCT"
+        ? product.slug
+        : `/dtf/pedido?produto=${encodeURIComponent(order.productId)}&meters=${order.quantityMeters}`,
     };
   } finally {
     db.close();
@@ -244,15 +254,31 @@ export function getCustomerArtworkResubmission(
   }
 }
 
-function mapOrderSummary(order: Order, productName: string): CustomerOrderSummary {
+function itemQuantityLabel(item: OrderItem) {
+  if (item.unit === "METER") {
+    return `${item.quantity} ${item.quantity === 1 ? "metro" : "metros"}`;
+  }
+  return `${item.quantity} ${item.quantity === 1 ? "unidade" : "unidades"}`;
+}
+
+function mapOrderSummary(
+  order: Order,
+  fallbackProductName: string,
+  items: OrderItem[],
+): CustomerOrderSummary {
   const status = deriveCustomerOrderStatus(order);
   const presentation = statusPresentation[status];
+  const firstItem = items[0];
   return {
     id: order.id,
     code: order.code,
-    productName,
-    quantityLabel: `${order.quantityMeters} ${order.quantityMeters === 1 ? "metro" : "metros"}`,
-    totalLabel: formatMoney(order.priceSnapshot.subtotalCents),
+    productName: items.length > 1
+      ? `${firstItem?.productName ?? fallbackProductName} + ${items.length - 1} item(ns)`
+      : firstItem?.productName ?? fallbackProductName,
+    quantityLabel: items.length === 1 && firstItem
+      ? itemQuantityLabel(firstItem)
+      : `${items.length} itens`,
+    totalLabel: formatMoney(order.totalCents),
     statusLabel: presentation.label,
     statusTone: presentation.tone,
     updatedAtLabel: formatDateTime(order.updatedAt),
@@ -395,15 +421,15 @@ function buildTimeline(
     {
       id: "artwork",
       title: artworkIssue
-        ? "Correção do arquivo necessária"
+        ? "Correção da personalização necessária"
         : artworkComplete
-          ? "Arte aprovada"
-          : "Revisão da arte",
+          ? "Personalização aprovada"
+          : "Revisão da personalização",
       description: artworkIssue
         ? "Uma nova versão precisa ser enviada."
         : artworkComplete
-          ? "A produção aprovou a versão mais recente."
-          : "A equipe verificará o arquivo antes de produzir.",
+          ? "A equipe aprovou os dados e arquivos enviados."
+          : "A equipe verificará os dados e arquivos antes de produzir.",
       occurredAtLabel: artworkApprovedAt
         ? formatDateTime(artworkApprovedAt)
         : undefined,
@@ -435,7 +461,11 @@ function buildTimeline(
       title: order.fulfillmentMethod === "PICKUP" ? "Retirada" : "Entrega",
       description:
         order.fulfillmentMethod === "PICKUP"
-          ? "Aguarde a confirmação antes de se deslocar."
+          ? order.fulfillmentStatus === "READY_FOR_PICKUP"
+            ? "Seu pedido está pronto. Consulte o local de retirada antes de se deslocar."
+            : order.fulfillmentStatus === "PICKED_UP"
+              ? "Retirada confirmada pela equipe."
+              : "Aguarde a confirmação antes de se deslocar."
           : "O rastreamento aparecerá quando o pedido for enviado.",
       occurredAtLabel: fulfilledAt ? formatDateTime(fulfilledAt) : undefined,
       state: fulfillmentComplete

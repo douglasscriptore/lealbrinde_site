@@ -1,121 +1,60 @@
-import {
-  ArrowSquareOut,
-  CreditCard,
-  ShoppingBagOpen,
-  Star,
-  Storefront,
-  Tag,
-  Truck,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, Star } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
 import Link from "next/link";
 
 import { shopeeStore } from "@/lib/marketplace";
 
 import { Reveal } from "./reveal";
 
-type ShopeeShowcaseProps = {
-  title?: string;
-  description?: string;
-  eyebrow?: string;
-};
-
-export function ShopeeShowcase({
-  title = "Produtos Leal Brinde com a praticidade da Shopee",
-  description = "Encontre brindes, etiquetas, estampas DTF prontas, produtos personalizados e muito mais em nossa loja oficial, com as condições informadas pela plataforma.",
-  eyebrow = "Loja oficial na Shopee",
-}: ShopeeShowcaseProps) {
+export function ShopeeShowcase() {
   return (
-    <section className="bg-[linear-gradient(180deg,var(--background),var(--marketplace-soft))] px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-      <Reveal className="relative mx-auto max-w-shell overflow-hidden rounded-card bg-marketplace-strong shadow-[0_28px_80px_rgb(185_55_29/0.22)]">
-        <ShoppingBagOpen
-          aria-hidden="true"
-          size={330}
-          weight="thin"
-          className="pointer-events-none absolute -right-16 -top-24 text-white/10"
-        />
-        <div className="relative grid lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="p-7 sm:p-10 lg:p-14 xl:p-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-marketplace-strong">
-              <Storefront aria-hidden="true" size={17} weight="fill" />
-              {eyebrow}
+    <section className="bg-background px-4 pb-20 pt-4 sm:px-6 sm:pb-28 lg:px-8">
+      <Reveal className="mx-auto w-full max-w-[400px]" variant="scale">
+        <Link
+          aria-label={`Visitar a loja oficial Leal Brinde na Shopee. Avaliação ${shopeeStore.rating} de 5 e ${shopeeStore.salesLabel}.`}
+          className="group relative block overflow-hidden rounded-card bg-marketplace-strong p-6 text-white shadow-[0_24px_60px_rgb(238_77_45/0.24)] transition-[transform,box-shadow] duration-(--duration-normal) ease-premium hover:-translate-y-1 hover:shadow-[0_30px_70px_rgb(238_77_45/0.31)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marketplace active:translate-y-px active:scale-[0.99] sm:p-7"
+          href={shopeeStore.url}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <div className="absolute -right-14 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+
+          <div className="relative flex items-start justify-between gap-5">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-control bg-white shadow-[0_10px_30px_rgb(123_33_16/0.2)]">
+              <Image alt="" aria-hidden height={34} src="/images/shopee-brand.svg" width={34} />
             </div>
-            <h2 className="mt-7 max-w-[15ch] text-balance text-4xl font-black tracking-[-0.05em] text-white sm:text-6xl">
-              {title}
+            <ArrowSquareOut
+              aria-hidden="true"
+              className="mt-1 transition-transform duration-(--duration-fast) ease-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              size={22}
+              weight="bold"
+            />
+          </div>
+
+          <div className="relative mt-8">
+            <p className="text-sm font-bold text-white/90">Loja oficial na Shopee</p>
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]">
+              Compre também pela Shopee
             </h2>
-            <p className="mt-6 max-w-[58ch] text-base leading-relaxed text-white sm:text-lg">
-              {description}
-            </p>
-
-            <div className="mt-8 grid max-w-2xl gap-2 sm:grid-cols-3" aria-label="Condições da loja na Shopee">
-              <div className="flex items-center gap-2 rounded-control border border-white/20 bg-foreground/10 px-3 py-3 text-sm font-semibold text-white">
-                <CreditCard aria-hidden="true" size={20} weight="duotone" />
-                Pagamento na plataforma
-              </div>
-              <div className="flex items-center gap-2 rounded-control border border-white/20 bg-foreground/10 px-3 py-3 text-sm font-semibold text-white">
-                <Tag aria-hidden="true" size={20} weight="duotone" />
-                Descontos da Shopee
-              </div>
-              <div className="flex items-center gap-2 rounded-control border border-white/20 bg-foreground/10 px-3 py-3 text-sm font-semibold text-white">
-                <Truck aria-hidden="true" size={20} weight="duotone" />
-                Entrega pela Shopee
-              </div>
-            </div>
-
-            <Link
-              href={shopeeStore.url}
-              target="_blank"
-              rel="noreferrer"
-              className="group mt-8 inline-flex min-h-13 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3 text-sm font-black text-marketplace-strong shadow-[0_16px_36px_rgb(109_31_16/0.25)] transition-[transform,box-shadow] duration-(--duration-fast) ease-premium hover:-translate-y-1 hover:shadow-[0_22px_48px_rgb(109_31_16/0.32)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white active:translate-y-px active:scale-[0.98]"
-            >
-              Ver todos os produtos na Shopee
-              <ArrowSquareOut
-                aria-hidden="true"
-                size={19}
-                weight="bold"
-                className="transition-transform duration-(--duration-fast) ease-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Link>
-            <p className="mt-4 max-w-xl text-xs leading-relaxed text-white">
-              Pagamento, descontos e entrega seguem as condições apresentadas pela Shopee.
+            <p className="mt-3 text-sm leading-6 text-white/90">
+              Veja nosso catálogo completo com as condições de pagamento e entrega da plataforma.
             </p>
           </div>
 
-          <div className="grid gap-3 border-t border-white/20 bg-marketplace-soft p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-1 lg:border-l lg:border-t-0 lg:p-8">
-            <div className="flex min-h-64 flex-col justify-between rounded-card bg-white p-7 shadow-[0_16px_40px_rgb(116_42_25/0.12)] sm:p-9">
-              <div className="flex items-center justify-between gap-5">
-                <span className="text-xs font-bold uppercase tracking-[0.12em] text-marketplace-strong">
-                  Avaliação pública
-                </span>
-                <Star aria-hidden="true" size={31} weight="fill" className="text-marketplace" />
+          <div className="relative mt-7 grid grid-cols-2 gap-3 border-t border-white/20 pt-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <strong className="text-2xl font-black tabular-nums">{shopeeStore.rating}</strong>
+                <Star aria-hidden="true" className="text-white" size={18} weight="fill" />
               </div>
-              <div className="mt-10" aria-label={`Avaliação ${shopeeStore.rating} de 5 na Shopee`}>
-                <div className="flex items-end gap-4">
-                  <p className="text-6xl font-black tracking-[-0.06em] tabular-nums text-foreground sm:text-7xl">
-                    {shopeeStore.rating}
-                  </p>
-                  <div className="mb-2 flex gap-0.5 text-marketplace" aria-hidden="true">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star key={index} size={17} weight="fill" />
-                    ))}
-                  </div>
-                </div>
-                <p className="mt-2 text-sm font-semibold text-muted">de 5 na Shopee</p>
-              </div>
+              <p className="mt-1 text-xs font-semibold text-white/80">de 5 na Shopee</p>
             </div>
-
-            <div className="flex min-h-56 flex-col justify-between rounded-card border border-marketplace/15 bg-white p-7 shadow-[0_16px_40px_rgb(116_42_25/0.09)] sm:p-9">
-              <ShoppingBagOpen aria-hidden="true" size={34} weight="duotone" className="text-marketplace" />
-              <div className="mt-9">
-                <p className="text-4xl font-black tracking-[-0.045em] text-foreground sm:text-5xl">
-                  {shopeeStore.salesLabel}
-                </p>
-                <p className="mt-3 max-w-[32ch] text-sm leading-relaxed text-muted">
-                  Histórico informado pela Leal Brinde em sua presença oficial.
-                </p>
-              </div>
+            <div className="border-l border-white/20 pl-4">
+              <strong className="text-lg font-black leading-tight">{shopeeStore.salesLabel}</strong>
+              <p className="mt-1 text-xs font-semibold text-white/80">na loja oficial</p>
             </div>
           </div>
-        </div>
+        </Link>
       </Reveal>
     </section>
   );

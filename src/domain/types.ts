@@ -3,7 +3,7 @@ export type ISODateTime = string;
 export type ProductType = "DTF_BY_METER" | "STANDARD_PRODUCT";
 export type ProductStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 export type PriceTableStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
-export type PaymentMethod = "PIX";
+export type PaymentMethod = "PIX" | "CREDIT_CARD";
 export type FulfillmentOption = "PICKUP" | "SHIPPING";
 
 export type ProductMedia = {
@@ -216,6 +216,11 @@ export type Order = {
   customerEmail: string;
   quantityMeters: number;
   priceSnapshot: PriceSnapshot;
+  customerId: string | null;
+  paymentMethod: PaymentMethod;
+  subtotalCents: number;
+  shippingCents: number;
+  totalCents: number;
   paymentStatus: PaymentStatus;
   artworkStatus: ArtworkStatus;
   productionStatus: ProductionStatus;
@@ -284,6 +289,7 @@ export type ArtworkReviewStatus =
 export type ArtworkVersion = {
   id: string;
   orderId: string;
+  orderItemId: string | null;
   version: number;
   storageKey: string;
   originalFilename: string;

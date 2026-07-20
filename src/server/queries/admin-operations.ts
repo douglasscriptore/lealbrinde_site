@@ -20,6 +20,7 @@ import {
 } from "@/domain";
 import {
   ArtworkVersionRepository,
+  CommerceRepository,
   FiscalDocumentRepository,
   isArtworkReadyForHumanReview,
   openDatabase,
@@ -130,6 +131,9 @@ function resolveOrderStatus(order: Order): Pick<
   if (order.productionStatus === "IN_PRODUCTION") {
     return { status: "IN_PRODUCTION", statusLabel: "Em produção" };
   }
+  if (order.paymentStatus === "PENDING_PIX" || order.paymentStatus === "DRAFT") {
+    return { status: "PENDING_PAYMENT", statusLabel: "Pagamento pendente" };
+  }
   if (order.artworkStatus === "CHANGES_REQUESTED") {
     return {
       status: "CHANGES_REQUESTED",
@@ -153,9 +157,6 @@ function resolveOrderStatus(order: Order): Pick<
       requiresAction: true,
       actionLabel: "Revisar arte",
     };
-  }
-  if (order.paymentStatus === "PENDING_PIX" || order.paymentStatus === "DRAFT") {
-    return { status: "PENDING_PAYMENT", statusLabel: "Pagamento pendente" };
   }
   if (order.artworkStatus === "APPROVED") {
     return { status: "APPROVED", statusLabel: "Arte aprovada" };
@@ -196,6 +197,16 @@ export async function getAdminProductList(
           : null,
       ),
     );
+  } finally {
+    db.close();
+  }
+}
+
+export async function getAdminStandardProduct(productId: string) {
+  await requireStaff(["ADMIN"]);
+  const db = openDatabase();
+  try {
+    return new CommerceRepository(db).getStandardProduct(productId);
   } finally {
     db.close();
   }
@@ -388,6 +399,7 @@ export async function getAdminOrders(
 
 export type AdminOrderDetail = {
   order: OperationsOrder;
+  isDtfOrder: boolean;
   quantityMeters: number;
   standardStartWithinBusinessHours: number;
   customLeadTimeAboveMeters: number;
@@ -404,6 +416,23 @@ export type AdminOrderDetail = {
   fulfillmentStatusLabel: string;
   fulfillmentMethodLabel: string;
   manualLeadTimeNote: string | null;
+  fiscalData: {
+    requested: boolean;
+    partyType: string | null;
+    document: string | null;
+    legalName: string | null;
+  } | null;
+  hasStructuredPersonalizationPending: boolean;
+  items: Array<{
+    id: string;
+    productName: string;
+    sku: string | null;
+    quantityLabel: string;
+    totalLabel: string;
+    artworkStatusLabel: string;
+    productionStatusLabel: string;
+    customization: Array<{ label: string; value: string }>;
+  }>;
   timeline: OrderTimelineEvent[];
   artworkVersions: Array<{
     id: string;
@@ -493,6 +522,7 @@ export async function getAdminOrderDetail(
         ? configuredPolicy.customLeadTimeAboveMeters
         : 100;
     const events = orders.events(order.id);
+    const orderItems = orders.items(order.id);
     const artwork = canViewArtwork
       ? new ArtworkVersionRepository(db).listForOrder(order.id)
       : [];
@@ -502,9 +532,29 @@ export async function getAdminOrderDetail(
     const documents = canViewFiscal
       ? new FiscalDocumentRepository(db).listForOrder(order.id)
       : [];
+    const customerData = canViewFiscal ? orders.getCustomerData(order.id) : null;
+
+    const summary = mapOrderSummary(order, productMap);
+    const productSummary = orderItems.length > 1
+      ? `${orderItems[0]?.productName ?? "Produto"} + ${orderItems.length - 1} item(ns)`
+      : orderItems[0]?.productName ?? summary.productName;
+    const quantitySummary = orderItems.length === 1
+      ? `${orderItems[0].quantity} ${orderItems[0].unit === "METER"
+        ? orderItems[0].quantity === 1 ? "metro" : "metros"
+        : orderItems[0].quantity === 1 ? "unidade" : "unidades"}`
+      : `${orderItems.length} itens`;
+    const hasStructuredPersonalizationPending = Boolean(db.prepare(
+      `SELECT 1 FROM order_items item
+       JOIN standard_product_configurations configuration
+         ON configuration.product_id = item.product_id
+       WHERE item.order_id = ? AND item.artwork_status = 'PENDING_REVIEW'
+         AND configuration.personalization_mode = 'STRUCTURED_FIELDS'
+       LIMIT 1`,
+    ).get(order.id));
 
     return {
-      order: mapOrderSummary(order, productMap),
+      order: { ...summary, productName: productSummary, quantityLabel: quantitySummary },
+      isDtfOrder: orderItems.some((item) => item.productType === "DTF_BY_METER"),
       quantityMeters: order.quantityMeters,
       standardStartWithinBusinessHours,
       customLeadTimeAboveMeters,
@@ -522,6 +572,32 @@ export async function getAdminOrderDetail(
       fulfillmentMethodLabel:
         order.fulfillmentMethod === "PICKUP" ? "Retirada" : "Entrega",
       manualLeadTimeNote: order.manualLeadTimeNote,
+      fiscalData: customerData ? {
+        requested: customerData.fiscal.requested,
+        partyType: customerData.fiscal.partyType,
+        document: customerData.fiscal.document,
+        legalName: customerData.fiscal.legalName,
+      } : null,
+      hasStructuredPersonalizationPending,
+      items: orderItems.map((item) => ({
+        id: item.id,
+        productName: item.productName,
+        sku: item.sku,
+        quantityLabel: `${item.quantity} ${item.unit === "METER"
+          ? item.quantity === 1 ? "metro" : "metros"
+          : item.quantity === 1 ? "unidade" : "unidades"}`,
+        totalLabel: formatMoney(item.totalCents),
+        artworkStatusLabel: item.artworkStatus === "NOT_REQUIRED"
+          ? "Não necessária"
+          : statusLabels.artwork[item.artworkStatus],
+        productionStatusLabel: statusLabels.production[item.productionStatus],
+        customization: Object.entries(item.customizationSnapshot)
+          .filter(([, value]) => value !== null && value !== undefined && value !== "")
+          .map(([key, value]) => ({
+            label: key.replace(/[_-]+/g, " ").replace(/^./, (letter) => letter.toUpperCase()),
+            value: String(value),
+          })),
+      })),
       timeline: events.map((event) => ({
         id: event.id,
         title: event.description,

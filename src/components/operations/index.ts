@@ -46,3 +46,5 @@ export {
 } from "./operations-ui";
 
 export type * from "./types";
+export { StandardProductForm } from "./standard-product-form";
+export { StandardProductAdmin } from "./standard-product-admin";

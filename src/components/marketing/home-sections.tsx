@@ -1,21 +1,21 @@
 import { CapacitySection } from "./capacity-section";
 import { ClosingCta } from "./closing-cta";
-import { DtfHighlight } from "./dtf-highlight";
 import { FaqSection } from "./faq-section";
+import { FeaturedProducts } from "./featured-products";
 import { MarketingHero, type MarketingHeroProps } from "./hero";
-import { ProcessSection } from "./process-section";
+import { ProductionVideoSection } from "./production-video-section";
 import { SectorGateway } from "./sector-gateway";
 import { ShopeeShowcase } from "./shopee-showcase";
+import type { StandardProductSummary } from "@/domain";
 import type {
   EquipmentCapacity,
   FrequentlyAskedQuestion,
   MarketingAction,
-  PriceTier,
-  ProcessStep,
   Sector,
 } from "./types";
 
 export type MarketingHomeSectionsProps = {
+  featuredProducts?: StandardProductSummary[];
   hero: MarketingHeroProps;
   sectors: {
     title: string;
@@ -23,17 +23,6 @@ export type MarketingHomeSectionsProps = {
     primary: Sector;
     secondary: Sector;
     development: Sector;
-  };
-  dtf: {
-    title: string;
-    description: string;
-    tiers: PriceTier[];
-    action: MarketingAction;
-  };
-  process: {
-    title: string;
-    description: string;
-    steps: ProcessStep[];
   };
   capacity: {
     title: string;
@@ -55,10 +44,9 @@ export type MarketingHomeSectionsProps = {
 };
 
 export function MarketingHomeSections({
+  featuredProducts = [],
   hero,
   sectors,
-  dtf,
-  process,
   capacity,
   faq,
   closing,
@@ -67,11 +55,11 @@ export function MarketingHomeSections({
     <main id="conteudo">
       <MarketingHero {...hero} />
       <SectorGateway {...sectors} />
-      <DtfHighlight {...dtf} />
-      <ProcessSection {...process} />
+      <ProductionVideoSection />
       <CapacitySection {...capacity} />
       <FaqSection {...faq} />
       <ClosingCta {...closing} />
+      <FeaturedProducts products={featuredProducts} />
       <ShopeeShowcase />
     </main>
   );

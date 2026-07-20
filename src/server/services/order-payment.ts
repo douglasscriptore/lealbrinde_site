@@ -31,16 +31,45 @@ function isStoredPayment(value: unknown): value is PixPayment {
   );
 }
 
-function toCheckoutPayment(attempt: PaymentAttempt): CheckoutPixPayment {
-  const stored = attempt.metadata.payment;
-  if (!isStoredPayment(stored)) {
-    throw new Error("Os dados da cobrança Pix estão incompletos.");
+function isCommerceStoredPayment(value: unknown): value is {
+  externalId: string;
+  provider: string;
+  expiresAt: string | null;
+  pix: { copyPasteCode: string; qrCodeBase64: string | null } | null;
+  metadata?: { sandbox?: boolean };
+} {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.externalId !== "string" || typeof candidate.provider !== "string") {
+    return false;
   }
+  if (!candidate.pix || typeof candidate.pix !== "object") return false;
+  const pix = candidate.pix as Record<string, unknown>;
+  return typeof pix.copyPasteCode === "string";
+}
 
-  return {
-    ...stored,
-    status: paymentStatusMap[attempt.status],
-  };
+function toCheckoutPayment(attempt: PaymentAttempt, order: Order): CheckoutPixPayment {
+  const stored = attempt.metadata.payment;
+  if (isStoredPayment(stored)) {
+    return {
+      ...stored,
+      status: paymentStatusMap[attempt.status],
+    };
+  }
+  if (isCommerceStoredPayment(stored)) {
+    return {
+      externalId: stored.externalId,
+      externalReference: order.code,
+      amountMinor: attempt.amountCents,
+      status: paymentStatusMap[attempt.status],
+      copyPasteCode: stored.pix!.copyPasteCode,
+      qrCodeBase64: stored.pix!.qrCodeBase64,
+      expiresAt: stored.expiresAt ?? attempt.expiresAt ?? new Date().toISOString(),
+      provider: stored.provider,
+      sandbox: stored.provider === "mock" || stored.metadata?.sandbox === true,
+    };
+  }
+  throw new Error("Os dados da cobrança Pix estão incompletos.");
 }
 
 export async function ensurePixPayment(
@@ -59,10 +88,10 @@ export async function ensurePixPayment(
         existing.expiresAt !== null &&
         new Date(existing.expiresAt).getTime() <= Date.now();
 
-      if (!expired) return toCheckoutPayment(existing);
+      if (!expired) return toCheckoutPayment(existing, order);
       attempts.transition(existing.id, "EXPIRED", "payment-expiration");
     } else if (existing?.status === "PAID" || existing?.status === "REFUNDED") {
-      return toCheckoutPayment(existing);
+      return toCheckoutPayment(existing, order);
     }
 
     const gateway = getPaymentGateway();
@@ -88,7 +117,7 @@ export async function ensurePixPayment(
       "checkout",
     );
 
-    return toCheckoutPayment(attempt);
+    return toCheckoutPayment(attempt, order);
   } finally {
     db.close();
   }

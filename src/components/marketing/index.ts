@@ -5,6 +5,7 @@ export { DtfHighlight } from "./dtf-highlight";
 export { DtfProductDetail } from "./dtf-product-detail";
 export { DtfProductPage, type DtfProductPageProps } from "./dtf-product-page";
 export { FaqSection } from "./faq-section";
+export { FeaturedProducts } from "./featured-products";
 export { MarketingFooter } from "./footer";
 export { MarketingHeader } from "./header";
 export { MarketingHero, type MarketingHeroProps } from "./hero";
@@ -22,6 +23,8 @@ export {
   formatTierRange,
 } from "./pricing";
 export { ProcessSection } from "./process-section";
+export { ProcessExplorer } from "./process-explorer";
+export { ProductionVideoSection } from "./production-video-section";
 export { ProductSpecifications } from "./product-specifications";
 export { Reveal } from "./reveal";
 export { SectorGateway } from "./sector-gateway";

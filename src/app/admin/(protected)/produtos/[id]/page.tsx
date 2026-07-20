@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ProductEditor, type ProductEditorTab } from "@/components/operations";
+import { ProductEditor, StandardProductAdmin, type ProductEditorTab } from "@/components/operations";
 import { requireStaff } from "@/server/auth/session";
-import { getAdminDtfProduct } from "@/server/queries/admin-operations";
+import { CommerceRepository, openDatabase } from "@/server/db";
+import { getAdminDtfProduct, getAdminStandardProduct } from "@/server/queries/admin-operations";
 
-import { productEditorAction, saveProductSectionAction } from "../../actions";
+import { adjustVariantInventoryAction, archiveStandardProductAction, createVariantPriceVersionAction, productEditorAction, publishStandardProductAction, saveProductSectionAction, updateStandardProductAction } from "../../actions";
 
 export const metadata: Metadata = { title: "Editar produto" };
 
@@ -20,7 +21,13 @@ export default async function AdminProductEditorPage({
 }: ProductEditorPageProps) {
   await requireStaff(["ADMIN"]);
   const [{ id }, feedback] = await Promise.all([params, searchParams]);
-  const product = await getAdminDtfProduct(id);
+  const [product, standard] = await Promise.all([getAdminDtfProduct(id), getAdminStandardProduct(id)]);
+  if (standard) {
+    const db = openDatabase();
+    const categories = new CommerceRepository(db).listCategories().filter((category) => category.status !== "ARCHIVED");
+    db.close();
+    return <StandardProductAdmin aggregate={standard} categories={categories} updateAction={updateStandardProductAction} archiveAction={archiveStandardProductAction} publishAction={publishStandardProductAction} inventoryAction={adjustVariantInventoryAction} priceAction={createVariantPriceVersionAction} error={feedback.erro?.slice(0, 500)} success={feedback.sucesso?.slice(0, 300)} />;
+  }
   if (!product) notFound();
 
   const readOnlySections =

@@ -1,5 +1,6 @@
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { WhatsappFloat } from "@/components/marketing/whatsapp-float";
 import { shopeeStore } from "@/lib/marketplace";
 
 const logo = {
@@ -13,13 +14,12 @@ export default function MarketingLayout({ children }: Readonly<{ children: React
       <MarketingHeader
         logo={logo}
         navigation={[
-          { label: "Brindes", href: "/brindes" },
+          { label: "Início", href: "/" },
+          { label: "Produtos", href: "/produtos" },
           { label: "DTF por metro", href: "/dtf" },
-          { label: "Pulseiras e cordões", href: "/pulseiras-e-cordoes" },
+          { label: "Pulseiras", href: "/pulseiras-e-cordoes" },
           { label: "Como funciona", href: "/como-funciona" },
-          { label: "Acompanhar pedido", href: "/entrar" },
         ]}
-        action={{ label: "Pedir DTF", href: "/dtf?acao=calcular" }}
       />
       {children}
       <MarketingFooter
@@ -30,7 +30,7 @@ export default function MarketingLayout({ children }: Readonly<{ children: React
             title: "Serviços",
             links: [
               { label: "Brindes", href: "/brindes" },
-              { label: "Loja oficial na Shopee", href: shopeeStore.url, external: true },
+              { label: "Catálogo próprio", href: "/produtos" },
               { label: "DTF por metro", href: "/dtf" },
               { label: "Como funciona", href: "/como-funciona" },
             ],
@@ -53,7 +53,9 @@ export default function MarketingLayout({ children }: Readonly<{ children: React
           },
         ]}
         legalText={`© ${new Date().getFullYear()} Leal Brinde. Todos os direitos reservados.`}
+        socialLinks={[{ label: `${shopeeStore.name}, ${shopeeStore.salesLabel}`, href: shopeeStore.url, external: true }]}
       />
+      <WhatsappFloat />
     </>
   );
 }

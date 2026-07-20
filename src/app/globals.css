@@ -5,6 +5,7 @@
   --background: #ffffff;
   --foreground: #20292e;
   --surface: #ffffff;
+  --surface-subtle: #f7fafb;
   --surface-strong: #edf6f8;
   --muted: #5c6b73;
   --border: #d6e1e5;
@@ -12,9 +13,12 @@
   --accent-strong: #006589;
   --accent-soft: #d9f4ff;
   --chrome: #afc0c7;
+  --chrome-strong: #72868f;
   --marketplace: #ee4d2d;
   --marketplace-strong: #d83f22;
   --marketplace-soft: #fff1ed;
+  --whatsapp: #25d366;
+  --whatsapp-strong: #1eaf54;
   --accent-foreground: #ffffff;
   --danger: #b42318;
   --warning: #8a4b08;
@@ -28,6 +32,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
   --color-surface-strong: var(--surface-strong);
   --color-muted: var(--muted);
   --color-border: var(--border);
@@ -35,9 +40,12 @@
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
   --color-chrome: var(--chrome);
+  --color-chrome-strong: var(--chrome-strong);
   --color-marketplace: var(--marketplace);
   --color-marketplace-strong: var(--marketplace-strong);
   --color-marketplace-soft: var(--marketplace-soft);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-strong: var(--whatsapp-strong);
   --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
@@ -47,16 +55,29 @@
   --container-shell: 88rem;
   --radius-card: 1rem;
   --radius-control: 0.75rem;
-  --shadow-premium: 0 18px 50px rgb(28 78 96 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.88);
-  --shadow-premium-hover: 0 24px 68px rgb(28 78 96 / 0.15), inset 0 1px 0 rgb(255 255 255 / 0.92);
+  --shadow-premium: 0 18px 55px rgb(30 75 91 / 0.09), 0 2px 8px rgb(30 75 91 / 0.05), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --shadow-premium-hover: 0 30px 80px rgb(30 75 91 / 0.14), 0 4px 12px rgb(30 75 91 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.94);
+  --shadow-float: 0 32px 90px rgb(30 75 91 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.9);
   --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
   --default-transition-duration: var(--duration-fast);
   --default-transition-timing-function: var(--ease-premium);
   --animate-skeleton: skeleton 1.4s ease-in-out infinite;
+  --animate-hero-copy: hero-copy 760ms var(--ease-premium) both;
+  --animate-hero-media: hero-media 920ms var(--ease-premium) 80ms both;
 
   @keyframes skeleton {
     0%, 100% { opacity: 0.48; }
     50% { opacity: 0.82; }
+  }
+
+  @keyframes hero-copy {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes hero-media {
+    from { opacity: 0; transform: translateY(20px) scale(1.018); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 }
 

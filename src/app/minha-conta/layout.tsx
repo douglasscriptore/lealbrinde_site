@@ -16,7 +16,7 @@ export default async function CustomerAccountLayout({
   const session = await requireSession();
 
   return (
-    <div className="min-h-[100dvh] bg-[radial-gradient(circle_at_85%_0%,color-mix(in_srgb,var(--accent)_7%,transparent),transparent_28%),var(--background)] text-foreground">
+    <div className="min-h-[100dvh] bg-[radial-gradient(circle_at_85%_0%,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_26%),var(--surface-subtle)] text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-white/90 shadow-[0_10px_32px_rgb(28_78_96/0.06)] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-shell items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-5">
@@ -52,7 +52,7 @@ export default async function CustomerAccountLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-shell px-4 py-8 sm:px-6 sm:py-12 lg:px-8" id="conteudo">
+      <main className="mx-auto w-full max-w-shell px-4 py-10 sm:px-6 sm:py-14 lg:px-8" id="conteudo">
         {children}
       </main>
     </div>

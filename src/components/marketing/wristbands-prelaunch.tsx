@@ -10,8 +10,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 
-import { shopeeStore } from "@/lib/marketplace";
-
 import { MarketingLink } from "./marketing-link";
 import { Reveal } from "./reveal";
 
@@ -71,14 +69,10 @@ export function WristbandsPrelaunch() {
             <Reveal delay={0.08} className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
               <MarketingLink label="Conhecer as linhas" href="#linhas" />
               <MarketingLink
-                label="Ver produtos disponíveis na Shopee"
-                href={shopeeStore.url}
-                external
+                label="Ver produtos disponíveis"
+                href="/produtos"
                 variant="secondary"
               />
-            </Reveal>
-            <Reveal variant="fade" delay={0.12} className="mt-5 max-w-[58ch] text-xs leading-relaxed text-muted">
-              A loja da Shopee reúne outros produtos da Leal Brinde. Pulseiras e cordões ainda não estão sendo anunciados como disponíveis.
             </Reveal>
           </div>
 
@@ -92,9 +86,6 @@ export function WristbandsPrelaunch() {
                 sizes="(max-width: 767px) 100vw, 56vw"
                 className="object-cover object-center"
               />
-              <div className="absolute bottom-4 left-4 rounded-full border border-white/45 bg-white/78 px-3 py-1.5 text-xs font-semibold text-foreground backdrop-blur-md">
-                Conceito visual do novo setor
-              </div>
             </div>
           </Reveal>
         </div>
@@ -197,9 +188,8 @@ export function WristbandsPrelaunch() {
             </p>
           </div>
           <MarketingLink
-            label="Ver a loja oficial na Shopee"
-            href={shopeeStore.url}
-            external
+            label="Explorar o catálogo"
+            href="/produtos"
             variant="secondary"
           />
         </Reveal>

@@ -112,7 +112,7 @@ export function CustomerDashboard({
     <div className="space-y-9">
       <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-slate-950">
+          <h1 className="text-4xl font-black tracking-[-0.04em] text-foreground sm:text-5xl">
             {customerName ? `Olá, ${customerName}` : "Seus pedidos"}
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">

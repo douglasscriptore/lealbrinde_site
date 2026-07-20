@@ -1,5 +1,6 @@
 import { MarketingHomeSections } from "@/components/marketing";
-import { getFeaturedDtfProduct, toMarketingPriceTiers } from "@/server/queries/dtf-products";
+import { getFeaturedDtfProduct } from "@/server/queries/dtf-products";
+import { getCatalog } from "@/server/queries/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +10,13 @@ function formatQuantity(value: number, singular: string, plural: string) {
 
 export default function HomePage() {
   const featured = getFeaturedDtfProduct();
-  const tiers = toMarketingPriceTiers(featured?.priceTable ?? null);
+  const catalog = getCatalog();
   const featuredProduct = featured?.aggregate.product;
   const productionPolicy = featured?.aggregate.productionPolicy;
-  const productHref = featuredProduct?.slug ?? "/contato";
+  const productHref = featuredProduct?.slug ?? "/dtf/textil-por-metro";
   const calculatorHref = featuredProduct
     ? `${productHref}#calcular`
-    : "/contato";
+    : "/dtf/textil-por-metro#calcular";
   const equipment =
     featured?.aggregate.equipment.filter((item) => item.active).map((item) => ({
       quantity: item.quantity,
@@ -42,16 +43,17 @@ export default function HomePage() {
 
   return (
     <MarketingHomeSections
+      featuredProducts={catalog.products.slice(0, 5)}
       hero={{
-        eyebrow: "Brindes e impressão",
-        title: "Sua marca.",
-        emphasis: "Bem feita.",
-        summary: "Brindes e DTF por metro com produção própria, revisão humana e acompanhamento claro.",
-        primaryAction: { label: "Pedir DTF", href: calculatorHref },
-        secondaryAction: { label: "Ver brindes", href: "/brindes" },
+        eyebrow: "Produção própria para marcas",
+        title: "Sua marca,",
+        emphasis: "em movimento.",
+        summary: "Personalize brindes e DTF, confira o preço e acompanhe a produção em um só lugar.",
+        primaryAction: { label: "Ver catálogo", href: "/produtos" },
+        secondaryAction: { label: "Calcular DTF", href: calculatorHref },
         image: {
-          src: "/images/dtf-hero-campaign.png",
-          alt: "Composição editorial de filme para impressão e tecidos personalizados",
+          src: "/images/leal-commerce-hero-v2.png",
+          alt: "Brindes, camisetas, pulseiras e materiais personalizados em uma gráfica moderna",
           priority: true,
         },
       }}
@@ -91,24 +93,6 @@ export default function HomePage() {
             alt: "Amostras editoriais de pulseiras, fitas e cordões personalizados",
           },
         },
-      }}
-      dtf={{
-        title: "Preço claro antes do Pix",
-        description: "A metragem define a faixa de todo o pedido. O preço por metro e o total aparecem juntos antes da escolha.",
-        tiers,
-        action: { label: "Calcular DTF", href: calculatorHref },
-      }}
-      process={{
-        title: "Você sabe o que acontece depois",
-        description: "Do arquivo à retirada, o pedido mostra a próxima ação sem depender de mensagens soltas.",
-        steps: [
-          { title: "Calcule a metragem", description: "Veja faixa, valor por metro e total.", icon: "calculate" },
-          { title: "Envie o arquivo", description: "A arte fica ligada ao pedido e às versões.", icon: "upload" },
-          { title: "Pague via Pix", description: "O valor é recalculado e confirmado no servidor.", icon: "pix" },
-          { title: "Acompanhe a revisão", description: "A equipe aprova ou explica a correção necessária.", icon: "review" },
-          { title: "Entre em produção", description: "Pedido pago e arte aprovada liberam a fila.", icon: "production" },
-          { title: "Retire ou receba", description: "Consulte retirada local ou rastreamento.", icon: "delivery" },
-        ],
       }}
       capacity={{
         title: "Estrutura para produzir",

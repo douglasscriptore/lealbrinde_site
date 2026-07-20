@@ -11,6 +11,7 @@ import {
   List,
   LockKey,
   Package,
+  Tag,
   PlugsConnected,
   Receipt,
   ShieldCheck,
@@ -28,6 +29,7 @@ const allStaff: StaffRole[] = ["OPERATOR", "FINANCE", "ADMIN"];
 const defaultNavigation: ScopedAdminNavItem[] = [
   { label: "Visão geral", href: "/admin", icon: SquaresFour, exact: true, roles: allStaff },
   { label: "Produtos", href: "/admin/produtos", icon: Package, roles: ["ADMIN"] },
+  { label: "Categorias", href: "/admin/categorias", icon: Tag, roles: ["ADMIN"] },
   { label: "Pedidos", href: "/admin/pedidos", icon: Receipt, roles: allStaff },
   { label: "Revisão de arte", href: "/admin/artes", icon: ImageSquare, roles: ["OPERATOR", "ADMIN"] },
   { label: "Produção", href: "/admin/producao", icon: Factory, roles: ["OPERATOR", "ADMIN"] },
@@ -158,7 +160,7 @@ export function AdminShell({
     navigation ?? defaultNavigation.filter((item) => item.roles.includes(accessRole));
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="min-h-[100dvh] bg-surface-subtle text-foreground">
       <a
         className="fixed left-3 top-3 z-50 -translate-y-20 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white focus:translate-y-0"
         href="#conteudo-principal"
@@ -166,7 +168,7 @@ export function AdminShell({
         Pular para o conteúdo
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-border bg-white/95 p-5 shadow-[8px_0_36px_rgb(28_78_96/0.06)] backdrop-blur lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-border bg-white/96 p-5 shadow-[8px_0_36px_rgb(28_78_96/0.06)] backdrop-blur lg:flex lg:flex-col">
         <a
           className="mb-7 flex min-h-12 items-center gap-3 rounded-control px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           href={brandHref}
@@ -223,9 +225,9 @@ export function AdminShell({
             </details>
           </div>
 
-          <div className="mx-auto hidden max-w-[1500px] items-end justify-between gap-6 px-8 py-7 lg:flex">
+          <div className="mx-auto hidden max-w-[1500px] items-end justify-between gap-6 border-b border-border bg-white/70 px-8 py-7 lg:flex">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950">
+              <h1 className="text-3xl font-black tracking-[-0.035em] text-foreground">
                 {title}
               </h1>
               {description ? (

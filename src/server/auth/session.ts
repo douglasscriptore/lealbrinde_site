@@ -13,9 +13,14 @@ export async function getCurrentSession() {
   return auth.api.getSession({ headers: await headers() });
 }
 
-export async function requireSession() {
+export async function requireSession(returnTo = "/minha-conta") {
   const session = await getCurrentSession();
-  if (!session || session.user.emailVerified !== true) redirect("/entrar");
+  if (!session || session.user.emailVerified !== true) {
+    const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//")
+      ? returnTo
+      : "/minha-conta";
+    redirect(`/entrar?retorno=${encodeURIComponent(safeReturnTo)}`);
+  }
   return session;
 }
 

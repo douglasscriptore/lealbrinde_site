@@ -21,13 +21,12 @@ export function getFeaturedDtfProduct() {
   const db = openDatabase();
   try {
     const products = new ProductRepository(db);
-    const product = products
+    const availableProducts = products
       .list({ type: "DTF_BY_METER" })
-      .find(
-        (candidate) =>
-          candidate.featured &&
-          isProductOrderable(candidate.status),
-      );
+      .filter((candidate) => isProductOrderable(candidate.status));
+    const product =
+      availableProducts.find((candidate) => candidate.featured) ??
+      availableProducts[0];
     if (!product) return null;
     const aggregate = products.getDtfAggregate(product.id);
     if (!aggregate) return null;

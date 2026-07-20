@@ -1,4 +1,4 @@
-import { ArrowUpRight, Wrench } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Wrench } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,148 +17,80 @@ type SectorGatewayProps = {
 
 function SectorAction({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm font-bold">
+    <span className="inline-flex items-center gap-2 text-sm font-black text-accent">
       {label}
-      <ArrowUpRight aria-hidden="true" size={17} weight="bold" />
+      <ArrowRight aria-hidden size={17} weight="bold" className="transition-transform duration-fast group-hover:translate-x-1" />
     </span>
   );
 }
 
-export function SectorGateway({
-  title,
-  description,
-  primary,
-  secondary,
-  development,
-}: SectorGatewayProps) {
+function SectorImage({ sector, sizes, className = "" }: { sector: Sector; sizes: string; className?: string }) {
+  if (!sector.image) return <div className={`bg-surface-strong ${className}`} />;
   return (
-    <section className="bg-background py-20 sm:py-28">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <div className={`relative overflow-hidden bg-surface-strong ${className}`}>
+      <Image
+        src={sector.image.src}
+        alt={sector.image.alt}
+        fill
+        sizes={sector.image.sizes ?? sizes}
+        className="object-cover transition-transform duration-700 ease-premium motion-safe:group-hover:scale-[1.025]"
+      />
+    </div>
+  );
+}
+
+export function SectorGateway({ title, description, primary, secondary, development }: SectorGatewayProps) {
+  return (
+    <section className="bg-surface-subtle py-20 sm:py-28">
+      <div className="mx-auto max-w-shell px-4 sm:px-6 lg:px-8">
         <Reveal className="max-w-3xl">
-          <h2 className="text-balance text-4xl font-black tracking-[-0.045em] text-foreground sm:text-6xl">
-            {title}
-          </h2>
-          <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-muted sm:text-lg">
-            {description}
-          </p>
+          <h2 className="text-balance text-4xl font-black tracking-[-0.045em] text-foreground sm:text-6xl">{title}</h2>
+          <p className="mt-5 max-w-[58ch] text-base leading-7 text-muted sm:text-lg">{description}</p>
         </Reveal>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-12 md:grid-rows-2">
-          <Reveal className="md:col-span-7 md:row-span-2">
+        <div className="mt-12 grid gap-5 lg:grid-cols-12 lg:grid-rows-[1fr_1fr]">
+          <Reveal className="lg:col-span-7 lg:row-span-2">
             <MotionSurface className="h-full">
-              <Link
-                href={primary.href}
-                className="group relative flex min-h-[560px] overflow-hidden rounded-card border border-white/70 bg-surface-strong shadow-premium transition-shadow duration-(--duration-smooth) hover:shadow-premium-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:h-full"
-              >
-              {primary.image ? (
-                <Image
-                  src={primary.image.src}
-                  alt={primary.image.alt}
-                  fill
-                  sizes={primary.image.sizes ?? "(max-width: 767px) 100vw, 58vw"}
-                  className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.025]"
-                />
-              ) : null}
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-              <div className="relative mt-auto max-w-xl p-7 text-white sm:p-10">
-                <h3 className="text-4xl font-black tracking-[-0.045em] sm:text-5xl">{primary.name}</h3>
-                <p className="mt-4 max-w-[48ch] text-base leading-relaxed text-white/80">
-                  {primary.description}
-                </p>
-                <div className="mt-6">
+              <Link href={primary.href} className="group flex h-full min-h-[570px] flex-col overflow-hidden rounded-card border border-border bg-surface shadow-premium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+                <SectorImage sector={primary} sizes="(max-width: 1023px) 100vw, 58vw" className="min-h-[360px] flex-1" />
+                <div className="grid gap-5 p-7 sm:grid-cols-[1fr_auto] sm:items-end sm:p-9">
+                  <div>
+                    <h3 className="text-4xl font-black tracking-[-0.045em] text-foreground sm:text-5xl">{primary.name}</h3>
+                    <p className="mt-3 max-w-[48ch] text-sm leading-6 text-muted sm:text-base">{primary.description}</p>
+                  </div>
                   <SectorAction label={primary.actionLabel} />
                 </div>
-              </div>
               </Link>
             </MotionSurface>
           </Reveal>
 
-          <Reveal delay={0.05} className="md:col-span-5">
+          <Reveal delay={0.05} className="lg:col-span-5">
             <MotionSurface className="h-full">
-              <Link
-                href={secondary.href}
-                className="group relative flex min-h-[310px] overflow-hidden rounded-card border border-white/70 bg-surface-strong shadow-premium transition-shadow duration-(--duration-smooth) hover:shadow-premium-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent md:h-full"
-              >
-              {secondary.image ? (
-                <Image
-                  src={secondary.image.src}
-                  alt={secondary.image.alt}
-                  fill
-                  sizes={secondary.image.sizes ?? "(max-width: 767px) 100vw, 42vw"}
-                  className="object-cover transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.025]"
-                />
-              ) : null}
-              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="relative mt-auto p-7 text-white sm:p-8">
-                <h3 className="text-3xl font-black tracking-[-0.04em]">{secondary.name}</h3>
-                <p className="mt-3 max-w-[44ch] text-sm leading-relaxed text-white/80">
-                  {secondary.description}
-                </p>
-                <div className="mt-5">
-                  <SectorAction label={secondary.actionLabel} />
-                </div>
-              </div>
-              </Link>
-            </MotionSurface>
-          </Reveal>
-
-          <Reveal delay={0.1} className="md:col-span-5">
-            <MotionSurface className="h-full">
-              <Link
-                href={development.href}
-                className="group relative flex min-h-[250px] h-full flex-col justify-between overflow-hidden rounded-card border border-white/70 bg-surface-strong p-7 shadow-premium transition-shadow duration-(--duration-smooth) hover:shadow-premium-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:p-8"
-              >
-                {development.image ? (
-                  <Image
-                    src={development.image.src}
-                    alt={development.image.alt}
-                    fill
-                    sizes={development.image.sizes ?? "(max-width: 767px) 100vw, 42vw"}
-                    className="object-cover transition-transform duration-700 ease-premium motion-safe:group-hover:scale-[1.025]"
-                  />
-                ) : null}
-                <div
-                  aria-hidden="true"
-                  className={`absolute inset-0 ${
-                    development.image
-                      ? "bg-gradient-to-t from-black/82 via-black/28 to-black/5"
-                      : "bg-[linear-gradient(145deg,var(--surface),var(--surface-strong))]"
-                  }`}
-                />
-                <div className="relative flex items-start justify-between gap-5">
-                  <Wrench
-                    aria-hidden="true"
-                    size={34}
-                    weight="duotone"
-                    className={development.image ? "text-white" : "text-accent"}
-                  />
-                  {development.status ? (
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-bold ${
-                        development.image
-                          ? "border-white/35 bg-black/20 text-white backdrop-blur-sm"
-                          : "border-border text-muted"
-                      }`}
-                    >
-                      {development.status}
-                    </span>
-                  ) : null}
-                </div>
-                <div className={`relative mt-8 ${development.image ? "text-white" : "text-foreground"}`}>
-                  <h3 className="text-3xl font-black tracking-[-0.04em]">
-                    {development.name}
-                  </h3>
-                  <p
-                    className={`mt-3 max-w-[44ch] text-sm leading-relaxed ${
-                      development.image ? "text-white/80" : "text-muted"
-                    }`}
-                  >
-                    {development.description}
-                  </p>
-                  <div className="mt-5">
-                    <SectorAction label={development.actionLabel} />
+              <Link href={secondary.href} className="group grid h-full min-h-[285px] overflow-hidden rounded-card border border-border bg-surface shadow-premium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:grid-cols-[0.9fr_1.1fr]">
+                <SectorImage sector={secondary} sizes="(max-width: 639px) 100vw, 25vw" className="min-h-52" />
+                <div className="flex flex-col justify-between p-6 sm:p-7">
+                  <div>
+                    <h3 className="text-3xl font-black tracking-[-0.04em] text-foreground">{secondary.name}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted">{secondary.description}</p>
                   </div>
+                  <div className="mt-6"><SectorAction label={secondary.actionLabel} /></div>
                 </div>
+              </Link>
+            </MotionSurface>
+          </Reveal>
+
+          <Reveal delay={0.1} className="lg:col-span-5">
+            <MotionSurface className="h-full">
+              <Link href={development.href} className="group grid h-full min-h-[285px] overflow-hidden rounded-card border border-accent/20 bg-[linear-gradient(135deg,var(--surface-strong),var(--surface))] shadow-premium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:grid-cols-[1.08fr_0.92fr]">
+                <div className="flex flex-col justify-between p-6 sm:p-7">
+                  <div>
+                    <div className="flex items-center gap-3 text-accent"><Wrench aria-hidden size={26} weight="duotone" /><span className="text-xs font-bold uppercase tracking-[0.14em]">{development.status}</span></div>
+                    <h3 className="mt-5 text-3xl font-black tracking-[-0.04em] text-foreground">{development.name}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted">{development.description}</p>
+                  </div>
+                  <div className="mt-6"><SectorAction label={development.actionLabel} /></div>
+                </div>
+                <SectorImage sector={development} sizes="(max-width: 639px) 100vw, 22vw" className="min-h-56" />
               </Link>
             </MotionSurface>
           </Reveal>

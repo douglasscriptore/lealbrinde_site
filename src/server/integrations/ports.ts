@@ -7,8 +7,31 @@ export type ShippingQuote = {
   estimatedBusinessDays: number;
 };
 
+export type ShippingAddress = {
+  postalCode: string;
+  street?: string;
+  number?: string;
+  district?: string;
+  city?: string;
+  state?: string;
+};
+
+export type ShippingItem = {
+  referenceId: string;
+  quantity: number;
+  unitPriceCents: number;
+  weightGrams: number;
+  widthCm: number;
+  heightCm: number;
+  lengthCm: number;
+};
+
 export interface ShippingProvider {
-  quote(input: { postalCode: string; weightGrams: number }): Promise<ShippingQuote[]>;
+  quote(input: {
+    origin: ShippingAddress;
+    destination: ShippingAddress;
+    items: ShippingItem[];
+  }): Promise<ShippingQuote[]>;
   createShipment(orderId: string): Promise<{ shipmentId: string; trackingCode: string }>;
   track(shipmentId: string): Promise<{ status: string; updatedAt: string }>;
 }

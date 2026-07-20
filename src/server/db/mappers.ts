@@ -6,6 +6,7 @@ import type {
   FiscalDocument,
   Order,
   OrderCustomerData,
+  OrderItem,
   OrderEvent,
   PaymentAttempt,
   PriceTable,
@@ -175,6 +176,17 @@ export function mapOrder(row: SqlRow): Order {
     customerEmail: text(row, "customer_email"),
     quantityMeters: number(row, "quantity_meters"),
     priceSnapshot: json(row, "price_snapshot_json"),
+    customerId: nullableText(row, "customer_id"),
+    paymentMethod: (nullableText(row, "payment_method") ?? "PIX") as Order["paymentMethod"],
+    subtotalCents:
+      row.subtotal_cents === undefined
+        ? json<Order["priceSnapshot"]>(row, "price_snapshot_json").subtotalCents
+        : number(row, "subtotal_cents"),
+    shippingCents: row.shipping_cents === undefined ? 0 : number(row, "shipping_cents"),
+    totalCents:
+      row.total_cents === undefined
+        ? json<Order["priceSnapshot"]>(row, "price_snapshot_json").subtotalCents
+        : number(row, "total_cents"),
     paymentStatus: text(row, "payment_status") as Order["paymentStatus"],
     artworkStatus: text(row, "artwork_status") as Order["artworkStatus"],
     productionStatus: text(
@@ -189,6 +201,31 @@ export function mapOrder(row: SqlRow): Order {
       row,
       "fulfillment_method",
     ) as Order["fulfillmentMethod"],
+    productionReadyAt: nullableText(row, "production_ready_at"),
+    manualLeadTimeNote: nullableText(row, "manual_lead_time_note"),
+    createdAt: text(row, "created_at"),
+    updatedAt: text(row, "updated_at"),
+  };
+}
+
+export function mapOrderItem(row: SqlRow): OrderItem {
+  return {
+    id: text(row, "id"),
+    orderId: text(row, "order_id"),
+    productId: text(row, "product_id"),
+    variantId: nullableText(row, "variant_id"),
+    productType: text(row, "product_type") as OrderItem["productType"],
+    productName: text(row, "product_name"),
+    sku: nullableText(row, "sku"),
+    quantity: number(row, "quantity"),
+    unit: text(row, "unit") as OrderItem["unit"],
+    unitPriceCents: number(row, "unit_price_cents"),
+    totalCents: number(row, "total_cents"),
+    priceSnapshot: json(row, "price_snapshot_json"),
+    customizationSnapshot: json(row, "customization_snapshot_json"),
+    shippingSnapshot: json(row, "shipping_snapshot_json"),
+    artworkStatus: text(row, "artwork_status") as OrderItem["artworkStatus"],
+    productionStatus: text(row, "production_status") as OrderItem["productionStatus"],
     productionReadyAt: nullableText(row, "production_ready_at"),
     manualLeadTimeNote: nullableText(row, "manual_lead_time_note"),
     createdAt: text(row, "created_at"),
@@ -252,6 +289,7 @@ export function mapArtworkVersion(row: SqlRow): ArtworkVersion {
   return {
     id: text(row, "id"),
     orderId: text(row, "order_id"),
+    orderItemId: nullableText(row, "order_item_id"),
     version: number(row, "version"),
     storageKey: text(row, "storage_key"),
     originalFilename: text(row, "original_filename"),

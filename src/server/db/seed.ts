@@ -4,6 +4,7 @@ import type { CreateDtfProductInput, Order } from "@/domain";
 
 import { OrderRepository } from "./order-repository";
 import { ProductRepository } from "./product-repository";
+import { CommerceRepository } from "./commerce-repository";
 import { domainId, writeAudit } from "./repository-helpers";
 
 export const INITIAL_DTF_PRODUCT_CODE = "DTF-TEXTIL-METRO";
@@ -175,6 +176,26 @@ const initialProduct: CreateDtfProductInput = {
 };
 
 export function seedInitialDomain(db: Database.Database): SeedResult {
+  const commerce = new CommerceRepository(db);
+  if (!commerce.findCategoryBySlug("brindes")) {
+    commerce.createCategory(
+      {
+        name: "Brindes",
+        slug: "brindes",
+        description: "Produtos personalizados para empresas, eventos e ações de relacionamento.",
+        imageUrl: null,
+        seo: {
+          title: "Brindes personalizados | Leal Brinde",
+          description: "Brindes personalizados com compra direta e opções administradas pela Leal Brinde.",
+          canonicalPath: "/categorias/brindes",
+          socialImageUrl: null,
+        },
+        displayOrder: 1,
+        status: "PUBLISHED",
+      },
+      "seed",
+    );
+  }
   const products = new ProductRepository(db);
   const orders = new OrderRepository(db);
   let product = products.list({ search: INITIAL_DTF_PRODUCT_CODE })[0];

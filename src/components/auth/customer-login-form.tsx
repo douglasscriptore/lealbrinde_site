@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 
 type FormState = "idle" | "sending" | "sent" | "error";
 
-export function CustomerLoginForm() {
+export function CustomerLoginForm({ callbackURL = "/minha-conta" }: { callbackURL?: string }) {
   const [state, setState] = useState<FormState>("idle");
   const [message, setMessage] = useState("");
 
@@ -19,7 +19,7 @@ export function CustomerLoginForm() {
     setMessage("");
     const result = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/minha-conta",
+      callbackURL,
       errorCallbackURL: "/entrar?erro=link",
     });
 
