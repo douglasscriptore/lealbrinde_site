@@ -64,6 +64,7 @@ export function CommerceCheckout({
   shippingEnabled: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const idempotencyKey = useRef<string | null>(null);
   const [method, setMethod] = useState<"PIX" | "CREDIT_CARD">(paymentMethods[0]);
   const [fulfillment, setFulfillment] = useState<"PICKUP" | "SHIPPING">("PICKUP");
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -142,7 +143,10 @@ export function CommerceCheckout({
       } : null;
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": idempotencyKey.current ??= crypto.randomUUID(),
+        },
         body: JSON.stringify({
           contact: { name: data.get("name"), phone: data.get("phone"), document: data.get("document") },
           paymentMethod: method,
@@ -158,8 +162,8 @@ export function CommerceCheckout({
           acceptedTerms: data.get("acceptedTerms") === "true",
         }),
       });
-      const payload = (await response.json()) as CheckoutResult & { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Não foi possível finalizar o pedido.");
+      const payload = (await response.json()) as CheckoutResult & { error?: string; message?: string };
+      if (!response.ok) throw new Error(payload.error ?? payload.message ?? "Não foi possível finalizar o pedido.");
       window.dispatchEvent(new CustomEvent("lealbrinde:cart-updated", { detail: { count: 0 } }));
       setResult(payload);
       setState("complete");

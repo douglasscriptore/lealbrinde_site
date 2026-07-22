@@ -6,6 +6,7 @@ import { getCurrentSession } from "@/server/auth/session";
 import { ensureCartCookie, readCart } from "@/server/cart-context";
 import { CommerceRepository, openDatabase } from "@/server/db";
 import { getStoredArtwork } from "@/server/integrations/object-storage";
+import { isLealBrindeApiConfigured, proxyToLealBrindeApi } from "@/server/api/lealbrinde-api";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,8 @@ function serialize(lines: NonNullable<Awaited<ReturnType<typeof readCart>>>["lin
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (isLealBrindeApiConfigured()) return proxyToLealBrindeApi(request, "/v1/carts/current");
   const current = await readCart();
   if (!current) return NextResponse.json({ items: [], subtotalCents: 0, paymentMethods: ["PIX"] });
   const db = openDatabase();
@@ -58,6 +60,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (isLealBrindeApiConfigured()) return proxyToLealBrindeApi(request, "/v1/carts/current");
   const parsed = itemSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Item inválido." }, { status: 422 });
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (isLealBrindeApiConfigured()) return proxyToLealBrindeApi(request, "/v1/carts/current");
   const parsed = updateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Quantidade inválida." }, { status: 422 });
   const current = await readCart();
@@ -113,6 +117,10 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (isLealBrindeApiConfigured()) {
+    const itemId = new URL(request.url).searchParams.get("itemId");
+    return proxyToLealBrindeApi(request, `/v1/carts/current${itemId ? `?itemId=${encodeURIComponent(itemId)}` : ""}`);
+  }
   const itemId = new URL(request.url).searchParams.get("itemId");
   if (!itemId) return NextResponse.json({ error: "Item não informado." }, { status: 422 });
   const current = await readCart();

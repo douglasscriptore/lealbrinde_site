@@ -1,99 +1,250 @@
-# Planejamento v3 - Catálogo próprio e modernização comercial completa
+# Migração para API NestJS, Firestore e Cloud Run
 
-## Objetivo
+## Estado da implementação em 20/07/2026
 
-Evoluir a Leal Brinde para um e-commerce próprio em Next.js, preservando o DTF existente e a linguagem premium clara baseada em Tailwind 4 e Motion.
+Concluído nesta primeira entrega executável:
 
-Decisões confirmadas:
+- repositório independente `api-lealbrinde` inicializado;
+- NestJS 11, configuração Zod, Swagger/OpenAPI, erros padronizados, request ID, throttling, logs e Sentry opcional;
+- Firebase Admin por Application Default Credentials e Emulator Suite configurado;
+- sessão Firebase, papéis, MFA TOTP da equipe e telas Firebase de login/cadastro/recuperação;
+- catálogo público, busca inicial, DTF destacado, configurações e administração transacional básica de produtos;
+- cálculo DTF validado nas oito fronteiras comerciais;
+- carrinho assinado, cálculo autoritativo, personalização, estoque e restrição Pix para carrinho com DTF;
+- checkout idempotente com retirada, snapshots, reservas e integração `/v2/payments`;
+- webhook HMAC idempotente, compromisso/liberação de estoque e outbox com OIDC;
+- pedidos do cliente, painel operacional, aprovação de arte e transições de produção/retirada;
+- Rules, índices, Docker, GitLab CI inicial e OpenTofu validado para Cloud Run/Secrets/Scheduler;
+- exportador SQLite e importador Firestore idempotente com checksum e feature flags desligadas;
+- BFF do Next para sessão, carrinho, checkout e health, ativado somente quando a API for configurada;
+- OpenAPI gerado e cliente tipado preparado no site;
+- site legado preservado como rollback temporário enquanto a homologação não ocorre.
 
-- Produtos comuns serão comprados diretamente no site.
-- DTF e produtos comuns poderão coexistir no mesmo carrinho.
-- Carrinho com qualquer item DTF aceitará somente Pix.
-- Carrinho sem DTF aceitará Pix e cartão.
-- Produtos personalizados serão pagos antes da revisão humana.
-- O pedido será enviado junto quando todos os itens estiverem prontos.
-- Frete nacional será calculado pelo Melhor Envio e retirada local será gratuita.
-- Login será obrigatório antes do checkout.
-- Produtos, variações, preços, estoque, personalização e frete serão gerenciados pelo painel.
-- Não haverá importação, avaliações próprias, analytics, CMS externo ou Storybook nesta etapa.
-- A Shopee ficará apenas no rodapé como canal secundário.
+Pendente antes do corte definitivo:
 
-## Experiência pública
+- confirmar a localização ainda não criada do Firestore e autenticar o `gcloud`;
+- criar versões reais dos segredos e publicar a primeira revisão no Cloud Run;
+- concluir mídia de catálogo/Storage, upload privado de arte, documentos fiscais e Melhor Envio;
+- migrar as consultas e ações restantes de catálogo/painel/conta para a API;
+- executar importação real, configurar o webhook e homologar o Pix ponta a ponta;
+- somente depois remover Better Auth e SQLite do runtime do Next.
 
-O tema permanece fixo em modo claro, com branco, azul-gelo, grafite e turquesa. Tailwind semântico será a fonte principal dos estilos, com fotografia real, bordas finas, sombras azuladas e movimento restrito a transformações e opacidade. Marketing terá movimento expressivo e as superfícies operacionais usarão animações apenas como feedback.
+## Objetivo e arquitetura final
 
-Rotas principais:
+Separar completamente apresentação e domínio. O Next.js continuará na Vercel como site e BFF fino; toda regra de catálogo, preço, estoque, permissão, carrinho, checkout e pedido ficará na nova API NestJS publicada no Cloud Run.
 
-- `/produtos`: catálogo com categorias, busca, filtros, ordenação e paginação.
-- `/produtos/[slug]`: página rica do produto.
-- `/categorias/[...slug]`: páginas comerciais indexáveis.
-- `/busca?q=`: busca por nome, código, conteúdo e atributos.
-- `/carrinho`: carrinho misto persistente.
-- `/checkout`: fluxo protegido por autenticação.
-- `/brindes`: entrada para o catálogo próprio.
-- `/pulseiras-e-cordoes`: pré-lançamento até existirem produtos publicados.
+```text
+Navegador
+   ↓
+Next.js / BFF
+   ↓
+lealbrinde-api / Cloud Run
+   ├── Firebase Auth
+   ├── Firestore
+   ├── Firebase Storage
+   ├── payment_api
+   ├── Melhor Envio
+   └── notificações
+```
 
-A home priorizará catálogo, categorias, produtos selecionados, DTF, pulseiras e cordões, processo de personalização, produção, retirada, entrega e FAQ. O bloco da Shopee sai da home e de Brindes. O rodapé mantém um link compacto e a prova manual de mais de 4 mil vendas, sem estrelas ou avaliações.
+Decisões fixadas:
 
-Busca pública usará SQLite FTS5. Filtros serão derivados dos atributos cadastrados e representados na URL. A página de produto terá galeria, variações, quantidade, preço por faixa, personalização, prazo, estoque, frete, retirada, especificações e CTA móvel. Preços serão públicos e dados estruturados serão emitidos apenas com informações reais.
+- Repositório independente: `../api-lealbrinde`.
+- `api-cms` será somente referência arquitetural e permanecerá intocado.
+- NestJS 11, Zod, Swagger, guards, throttling, interceptadores, Sentry e Docker.
+- API versionada em `/v1`; OpenAPI em `/docs-json`.
+- Next usa cliente gerado com `openapi-typescript` e `openapi-fetch`.
+- Firestore Native Mode, Storage e Cloud Run em `southamerica-east1`.
+- A região do Firestore deve ser confirmada antes da criação, pois é imutável.
+- Projeto Firebase único de produção: `site-lealbrinde`; testes usam Emulator Suite.
+- `payment_api` permanece como integração exclusiva com Mercado Pago.
+- Nenhum dual write entre SQLite e Firestore.
+- Migração inicial inclui somente catálogo e configurações. Pedidos, usuários, carrinhos, artes, documentos e pagamentos locais de homologação serão descartados.
 
-## Catálogo e administração
+## API e contratos
 
-O catálogo terá produtos padrão e DTF. Produtos padrão terão opções administráveis, variantes por combinação, SKU, preço base, mínimo, incremento, estoque controlado ou fabricação sob encomenda, peso, dimensões e estado de publicação.
+Módulos previstos:
 
-Personalização:
+- `auth`, `catalog`, `categories`, `pricing`, `carts`, `checkout`, `orders`;
+- `artworks`, `inventory`, `production`, `fulfillment`, `fiscal`, `payments`;
+- `customers`, `admin`, `audit`, `integrations`, `outbox` e `health`.
 
-- `NONE`: sem personalização.
-- `STRUCTURED_FIELDS`: texto, texto longo, seleção, número, cor e observação.
-- `ARTWORK_UPLOAD`: arquivo privado com preflight, versões e revisão humana.
+Contratos transversais:
 
-Preços por quantidade serão versionados. Pedidos guardarão snapshots imutáveis de produto, variante, faixa, personalização e valores. Produtos publicados com entrega deverão possuir peso e dimensões. Produtos sem preço determinável não poderão ser publicados para compra direta.
+```ts
+type ApiError = {
+  statusCode: number;
+  code: string;
+  message: string;
+  details?: unknown;
+  requestId: string;
+};
 
-O painel terá categorias, coleções, produtos, variantes, preços, estoque, personalizações, mídia, SEO, publicação, pedidos, produção por item, artes, pagamentos, reembolsos, Melhor Envio, documentos fiscais, auditoria e integrações.
+type CursorPage<T> = {
+  items: T[];
+  nextCursor: string | null;
+};
+```
 
-Permissões:
+- Datas públicas em ISO 8601 e persistidas como `Timestamp`.
+- Dinheiro sempre em centavos.
+- Mutações críticas exigem `Idempotency-Key`.
+- Atualizações administrativas exigem `expectedVersion`; conflitos retornam 409.
+- O Next pode validar formulários para feedback, mas a API repete todas as validações.
 
-- `OPERATOR`: pedidos, artes, produção e entrega.
-- `FINANCE`: pagamentos, documentos e reembolsos.
-- `ADMIN`: catálogo, preços, estoque, configurações e integrações.
+Superfície HTTP inicial:
 
-## Carrinho e pedidos
+- Público: catálogo, produto, categoria, busca, DTF destacado e configurações em `/v1/public/*`.
+- Sessão: criar, encerrar e consultar sessão em `/v1/auth/*`.
+- Carrinho, frete e checkout em `/v1/carts/current`, `/v1/shipping/quotes` e `/v1/checkout`.
+- Cliente: pedidos, artes, Pix e documentos em `/v1/me/*`.
+- Administração: catálogo, preço, estoque, pedidos, produção, documentos e auditoria em `/v1/admin/*`.
+- Integrações: webhook de pagamento em `/v1/webhooks/payment-api` e outbox interno protegido por OIDC.
 
-O carrinho poderá começar anonimamente usando cookie assinado e `HttpOnly`. Depois do login ele será vinculado ou mesclado à conta. O servidor recalculará preço, estoque e frete antes do pagamento.
+## Autenticação e autorização
 
-O pedido será uma entidade principal com múltiplos itens. Pagamento e entrega ficam no pedido. Arte e produção ficam por item. Se houver DTF, o pedido inteiro aceitará apenas Pix. Sem DTF, aceitará Pix e cartão quando a integração estiver ativa. A expedição só será liberada quando todos os itens estiverem prontos.
+- Firebase Auth com e-mail e senha para clientes e equipe.
+- Cadastro público cria apenas `CUSTOMER`.
+- E-mail verificado é obrigatório antes do checkout.
+- Papéis em custom claims: `CUSTOMER`, `OPERATOR`, `FINANCE` e `ADMIN`.
+- TOTP via Identity Platform é obrigatório para equipe.
+- Promoção de equipe ocorre somente por administrador e revoga sessões existentes.
+- O frontend recebe o ID token e o BFF o troca por Firebase session cookie.
+- Cookie `__session`: `HttpOnly`, `Secure`, `SameSite=Lax`; até 14 dias para cliente e 8 horas para equipe com MFA confirmado.
+- O site nunca autoriza pela interface; a API valida sessão, claims e MFA em toda operação.
+- Firebase Admin usa Application Default Credentials no Cloud Run.
+- A configuração web usa `NEXT_PUBLIC_FIREBASE_*`; Analytics não será inicializado nesta fase.
 
-Estoque controlado será reservado ao iniciar o pagamento e liberado em falha, expiração ou cancelamento. Mudanças após pagamento nunca recalcularão silenciosamente: exigirão cancelamento, reembolso ou novo pedido.
+## Firestore
 
-## Pagamentos e logística
+Coleções:
 
-A `payment_api` continuará como integração única com Mercado Pago. Será adicionado um contrato v2 para múltiplos itens, preservando o endpoint legado de produto único. O site recalculará o pedido e enviará um snapshot congelado com idempotência. Cartões serão tokenizados no navegador com MercadoPago.js. A `payment_api` enviará eventos assinados por HMAC e o site processará eventos duplicados ou fora de ordem de forma idempotente.
+```text
+users/{uid}
+unique_keys/{namespace:value}
+categories/{categoryId}
+products/{productId}
+products/{productId}/variants/{variantId}
+price_tables/{priceTableId}
+file_policies/{policyId}
+production_policies/{policyId}
+carts/{cartId}
+orders/{orderId}
+orders/{orderId}/items/{itemId}
+orders/{orderId}/events/{eventId}
+artwork_assets/{assetId}
+fiscal_documents/{documentId}
+payment_attempts/{attemptId}
+shipping_quotes/{quoteId}
+inventory_reservations/{reservationId}
+inventory_movements/{movementId}
+integration_events/{source:eventId}
+audit_logs/{logId}
+outbox_events/{eventId}
+settings/commerce
+catalog_migrations/{migrationId}
+```
 
-A administração terá máximo de parcelas, opções auxiliares, descritor da fatura, ativação de cartão e prévia de parcelamento. Essas configurações serão acessadas por rotas administrativas autenticadas da `payment_api`. A taxa de serviço da Leal permanecerá zero.
+Regras:
 
-O Melhor Envio receberá origem, destino e os dados físicos dos itens. A cotação escolhida será armazenada e revalidada antes do pagamento. Compra e geração da etiqueta serão ações administrativas depois que todos os itens estiverem prontos. Retirada local não exigirá cotação.
+- Leitura e escrita comercial direta pelo navegador serão negadas. A API usa Admin SDK.
+- Slug, código e SKU usam documentos `unique_keys` criados na mesma transação.
+- Tabelas publicadas são imutáveis e faixas ficam embutidas na versão.
+- Itens de pedido preservam snapshots de produto, SKU, preço, personalização e frete.
+- Busca inicial usa `searchTokens` e `searchPrefixes` normalizados.
+- Atualizações removem valores `undefined` antes de persistir.
 
-## Migração do DTF
+Checkout transacional:
 
-- Criar `order_items` e converter cada pedido DTF existente em um item.
-- Preservar temporariamente as colunas antigas como compatibilidade somente leitura.
-- Associar novas artes ao item do pedido.
-- Migrar estados de arte e produção para o item.
-- Preservar snapshots, pagamentos, documentos, eventos, códigos e URLs.
-- Remover campos legados apenas depois da validação de paridade.
+1. API recalcula carrinho, personalização, estoque, frete e métodos de pagamento.
+2. Uma transação valida versões, reserva estoque, cria pedido/itens, snapshots, evento, auditoria e outbox.
+3. Após o commit, chama `POST /v2/payments` da `payment_api` com idempotência.
+4. Segunda transação persiste tentativa e resultado.
+5. Interrupção deixa `PAYMENT_CREATING`; processador idempotente retoma ou cancela e libera reservas.
+6. Webhook HMAC usa `integration_events/{source:eventId}` para deduplicação e respeita a máquina de estados.
 
-## Etapas de implementação
+## Firebase Storage
 
-1. Registrar este planejamento e criar migrações compatíveis.
-2. Implementar domínio, repositórios e regras de catálogo, carrinho e pedidos.
-3. Construir catálogo público, busca, filtros, PDP e carrinho.
-4. Construir a administração de produtos padrão, estoque e personalização.
-5. Evoluir a `payment_api` e validar Pix e cartão em sandbox sem quebrar clientes existentes.
-6. Integrar Melhor Envio em sandbox, retirada, etiquetas e rastreamento.
-7. Migrar pedidos DTF, executar piloto e liberar catálogo e checkout por feature flags.
+- Catálogo: `public/products/{productId}/...`.
+- Artes: `private/artworks/{uid}/{assetId}/...`.
+- Documentos: `private/orders/{orderId}/documents/...`.
+- A API inicia o upload e fornece URL temporária; o binário vai direto ao Storage.
+- A conclusão confere objeto, tamanho, MIME, assinatura e checksum.
+- Arquivos privados usam somente URLs assinadas curtas após autorização.
+- Reenvio de arte sempre cria nova versão.
+- Não haverá promessa de antivírus enquanto um scanner real não estiver configurado.
 
-## Validação
+## Infraestrutura e publicação
 
-Testes obrigatórios cobrirão preços e faixas, variantes, carrinho misto, restrição Pix para DTF, cartão para produtos padrão, estoque concorrente, personalização, versões de arte, expedição consolidada, retirada, frete, Pix expirado, cartão recusado, webhooks duplicados, reembolsos, compatibilidade da `payment_api`, histórico DTF, autorização, acessibilidade, SEO e responsividade.
+Cloud Run inicial:
 
-Metas: LCP abaixo de 2,5 s, CLS abaixo de 0,1 e INP abaixo de 200 ms. A entrega final deve passar TypeScript, ESLint, testes, build e validação visual com Node 24.18.0.
+- Node 24, 1 vCPU, 512 MiB, concorrência 40, timeout 60s, mínimo 0 e máximo 10 instâncias.
+- Artifact Registry, service account dedicada, Secret Manager, Cloud Scheduler, logs e alertas.
+- HTTP acessível para o BFF, porém protegido por chave do site, sessão Firebase, papéis/MFA, HMAC ou OIDC conforme a rota.
+- Segredos: chave BFF, URL/chave da `payment_api`, segredo HMAC, Sentry e futuras integrações.
+- Permissões mínimas para Firestore, Auth, Storage, Secret Manager e logs.
+
+Pipeline GitLab:
+
+1. lint, typecheck e testes;
+2. build e push da imagem;
+3. plano/aplicação OpenTofu Google;
+4. Rules e índices;
+5. deploy de revisão no Cloud Run;
+6. smoke test e promoção;
+7. tags `vX.Y.Z` publicam produção.
+
+## Migração do catálogo
+
+Exportar do SQLite, somente leitura:
+
+- 2 produtos, 1 categoria, configurações DTF/padrão, variantes, versões/faixas de preço, especificações, equipamentos, políticas, personalizações, estoque e configurações comerciais.
+- Não exportar os 7 pedidos, 3 usuários, 3 carrinhos, eventos, arte, documento fiscal ou pagamentos locais.
+- Preservar IDs, códigos, slugs e versões de preço.
+- Copiar imagens para Storage e atualizar referências.
+
+O importador será idempotente, terá `--dry-run`, checksum, projeto explícito, confirmação textual de produção e marcador `catalog_migrations/sqlite-catalog-v1`. Conflitos falham sem sobrescrita silenciosa. Durante a importação, `catalogEnabled=false` e `directCheckoutEnabled=false`.
+
+## Migração do Next.js
+
+- Introduzir cliente tipado da API.
+- Trocar consultas SQLite por chamadas server-to-server.
+- Preservar URLs, SEO, componentes e contratos visuais.
+- Rotas atuais do site tornam-se proxies finos.
+- Server Actions administrativas chamam a API autenticada.
+- Cache público usa tags curtas e invalidação pontual após mutação confirmada.
+- Ao final, remover Better Auth, `better-sqlite3`, repositórios/migrations/seeds de runtime, storage local e webhook financeiro no Next.
+
+## Troca de produção
+
+1. Confirmar `southamerica-east1` e criar Firestore, Auth, Storage e índices.
+2. Criar primeiro `ADMIN` por script de bootstrap.
+3. Publicar API com checkout desabilitado.
+4. Exportar e importar catálogo.
+5. Validar catálogo, preços e painel pela API.
+6. Apontar webhook da `payment_api` ao Cloud Run.
+7. Publicar site com BFF e Firebase Auth.
+8. Fazer smoke de login, catálogo e carrinho.
+9. Habilitar catálogo.
+10. Homologar uma compra Pix ponta a ponta.
+11. Habilitar checkout.
+12. Remover o runtime SQLite logo após a homologação.
+
+Rollback: desligar checkout, reverter revisões Cloud Run/Vercel e nunca devolver pedidos Firestore ao SQLite.
+
+## Testes e aceite
+
+- Auth, verificação de e-mail, recuperação, sessão, papéis e MFA.
+- Unicidade e concorrência de catálogo/estoque.
+- Publicação, arquivamento e preço imutável.
+- DTF em 1, 5, 6, 10, 11, 99, 100 e 101 metros.
+- Carrinho anônimo, mesclagem após login e carrinho misto Pix-only.
+- Reserva, expiração, checkout e webhook idempotentes.
+- Eventos duplicados/fora de ordem e falha parcial da `payment_api`.
+- Revisão, produção, retirada, entrega, artes e documentos privados.
+- Importação repetida sem duplicação.
+- OpenAPI e contratos com `payment_api`.
+- Fluxo completo produto → carrinho → login → checkout → Pix → webhook → conta → painel → aprovação → produção → retirada.
+- Lint, TypeScript, testes, build, smoke Cloud Run e logs sem dados sensíveis.
+
+Critério final: nenhuma regra comercial ou acesso direto a dados comerciais permanece no Next, e o site continua funcionando com a API como fonte única de verdade.

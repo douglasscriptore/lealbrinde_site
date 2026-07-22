@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
+import { firebaseAuth } from "@/lib/firebase-client";
+import { signOut as firebaseSignOut } from "firebase/auth";
 
 export function CustomerSignOutButton() {
   const router = useRouter();
@@ -14,9 +16,13 @@ export function CustomerSignOutButton() {
   async function signOut() {
     setPending(true);
     setError("");
-    const result = await authClient.signOut();
+    const useFirebase = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+    const failed = useFirebase
+      ? !(await fetch("/api/firebase-session", { method: "DELETE" })).ok
+      : Boolean((await authClient.signOut()).error);
+    if (useFirebase) await firebaseSignOut(firebaseAuth()).catch(() => undefined);
 
-    if (result.error) {
+    if (failed) {
       setError("Não foi possível sair. Tente novamente.");
       setPending(false);
       return;

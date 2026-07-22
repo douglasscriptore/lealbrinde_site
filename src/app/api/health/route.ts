@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { isLealBrindeApiConfigured, lealBrindeApi } from "@/server/api/lealbrinde-api";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
+export async function GET() {
   const production = process.env.NODE_ENV === "production";
   const checks = {
     app: "ok",
@@ -16,9 +17,20 @@ export function GET() {
     publicUrl: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   };
 
+  let api: "not_configured" | "ok" | "unavailable" = "not_configured";
+  if (isLealBrindeApiConfigured()) {
+    try {
+      await lealBrindeApi<{ status: "ok" }>("/v1/health");
+      api = "ok";
+    } catch {
+      api = "unavailable";
+    }
+  }
+
   const unsafeProductionConfiguration =
     production &&
-    (checks.payments === "mock" ||
+    (api !== "ok" ||
+      checks.payments === "mock" ||
       checks.uploads === "local" ||
       checks.fileScanner === "mock-signature" ||
       checks.email === "console" ||
@@ -28,7 +40,7 @@ export function GET() {
   return NextResponse.json(
     {
       status: unsafeProductionConfiguration ? "not_ready" : "ok",
-      checks,
+      checks: { ...checks, api },
       timestamp: new Date().toISOString(),
     },
     { status: unsafeProductionConfiguration ? 503 : 200 },

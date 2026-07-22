@@ -27,9 +27,9 @@ export function CartView({ initial }: { initial: CartPayload }) {
   async function mutate(url: string, init: RequestInit, itemId: string) {
     setBusy(itemId); setError("");
     const response = await fetch(url, init);
-    const payload = await response.json() as CartPayload & { error?: string };
+    const payload = await response.json() as CartPayload & { error?: string; message?: string };
     setBusy(null);
-    if (!response.ok) { setError(payload.error ?? "Não foi possível atualizar o carrinho."); return; }
+    if (!response.ok) { setError(payload.error ?? payload.message ?? "Não foi possível atualizar o carrinho."); return; }
     setCart(payload);
     window.dispatchEvent(new CustomEvent("lealbrinde:cart-updated", {
       detail: {

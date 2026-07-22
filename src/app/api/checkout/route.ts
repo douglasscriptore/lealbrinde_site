@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentSession } from "@/server/auth/session";
 import { clearCartCookie, readCart } from "@/server/cart-context";
 import { createCommerceOrder } from "@/server/services/commerce-order";
+import { isLealBrindeApiConfigured, proxyToLealBrindeApi } from "@/server/api/lealbrinde-api";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (isLealBrindeApiConfigured()) return proxyToLealBrindeApi(request, "/v1/checkout");
   const session = await getCurrentSession();
   if (!session || session.user.emailVerified !== true) return NextResponse.json({ error: "Acesse sua conta para finalizar a compra.", loginRequired: true }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));

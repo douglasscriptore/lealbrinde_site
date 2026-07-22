@@ -55,11 +55,12 @@ export function ProductConfigurator({
     });
     const payload = await response.json() as {
       error?: string;
+      message?: string;
       items?: Array<{ quantity: number }>;
     };
     if (!response.ok) {
       setState("error");
-      setMessage(payload.error ?? "Não foi possível adicionar ao carrinho.");
+      setMessage(payload.error ?? payload.message ?? "Não foi possível adicionar ao carrinho.");
       return;
     }
     setState("added");
